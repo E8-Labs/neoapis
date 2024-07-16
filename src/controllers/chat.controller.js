@@ -48,4 +48,27 @@ const sendMessage = async (req, res) => {
 };
 
 
-export { sendMessage }
+
+const getMessages = async (req, res) => {
+  const {chatId} = req.body
+  JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+    if (authData) {
+      let messages = await db.Message.findAll({
+        where: {
+          chatId: chatId
+        }
+      })
+
+      return res.json({ status: true, message: "messages list", data: messages });
+    }
+    else{
+      res.json({ error: 'Server Error', status: false, message: "Unauthenticated user", data: null });
+    }
+
+  });
+
+}
+
+
+
+export { sendMessage, getMessages }
