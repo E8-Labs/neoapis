@@ -15,7 +15,17 @@ export const Message = (sequelize, Sequelize)=> {
           image: {
             type: Sequelize.STRING,
             allowNull: true,
-          }
+          },
+          tokens: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            defaultValue: 0,
+          },
+          finishReason: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            defaultValue: "stop"
+          },
       });
 
       return Message
