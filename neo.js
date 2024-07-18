@@ -18,6 +18,32 @@ app.use(cors())
 app.use(express.json())
 
 
+app.use((req, res, next) => {
+    console.log(`${req.method} request for '${req.url}'`);
+    next();
+  });
+  
+  app.use(cors({
+    origin: 'https://blindcircle.com:444',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  }));
+  
+  // Parse JSON bodies
+//   app.use(express.json());
+  
+  // Manually handle preflight requests
+  app.options('*', (req, res) => {
+    res.header('Access-Control-Allow-Origin', 'https://blindcircle.com:444');
+    res.header('Access-Control-Allow-Methods', 'GET, POST');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.sendStatus(200);
+  });
+
+
+
 
 db.sequelize.sync({alter: true})
 
