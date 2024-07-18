@@ -24,7 +24,7 @@ app.use((req, res, next) => {
   });
   
   app.use(cors({
-    origin: 'https://blindcircle.com:444',
+    origin: 'https://neoai-ebon.vercel.app/onboarding',
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -35,7 +35,7 @@ app.use((req, res, next) => {
   
   // Manually handle preflight requests
   app.options('*', (req, res) => {
-    res.header('Access-Control-Allow-Origin', 'https://blindcircle.com:444');
+    res.header('Access-Control-Allow-Origin', 'https://neoai-ebon.vercel.app/onboarding');
     res.header('Access-Control-Allow-Methods', 'GET, POST');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.header('Access-Control-Allow-Credentials', 'true');
