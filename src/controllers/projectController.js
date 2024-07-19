@@ -46,6 +46,7 @@ const getUserProjects = async (req, res) => {
             
                 res.status(201).json({ status: true, message: "Project created", data: await ProjectResource(projects)});
               } catch (error) {
+                console.log("Error Create Project: ", error)
                 res.status(500).json({ error: 'Server Error', status: false, message: error.message });
               }
         }
