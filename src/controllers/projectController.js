@@ -20,7 +20,7 @@ const createProject = async (req, res) => {
                 // Create a chat for the project
                 const chat = await db.Chat.create({ projectId: project.id });
             
-                res.status(201).json({ status: true, message: "Project created", data: await ProjectResource(project)});
+                res.status(200).json({ status: true, message: "Project created", data: await ProjectResource(project)});
               } catch (error) {
                 res.status(500).json({ error: 'Server Error', status: false, message: error.message });
               }
