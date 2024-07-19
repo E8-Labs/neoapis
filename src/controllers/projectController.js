@@ -10,6 +10,7 @@ const createProject = async (req, res) => {
         if (authData) {
             try {
                 const { appIdea, targettedAudience, projectName } = req.body;
+                console.log("Received data ", req.body)
                 const project = await db.Project.create({
                   appIdea,
                   targettedAudience,
