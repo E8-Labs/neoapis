@@ -82,7 +82,7 @@ console.log("There is a file uploaded")
           });
         }
 
-        const response = await sendMessageToGPT(content, previousMessages);
+        const response = await sendMessageToGPT(content, previousMessages, image);
         const gptResponse = response.choices[0];
         let promptTokens = response.usage.prompt_tokens;
         let completionTokens = response.usage.completion_tokens;
