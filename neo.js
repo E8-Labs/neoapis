@@ -24,7 +24,7 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-const uploadsPath = path.join(__dirname, 'neoapis', 'uploads');
+const uploadsPath = path.join(__dirname, 'uploads');
 console.log('Serving static files from:', uploadsPath);
 app.use('/neo/uploads', express.static(uploadsPath));
 
