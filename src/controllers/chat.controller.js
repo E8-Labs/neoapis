@@ -39,8 +39,8 @@ console.log("There is a file uploaded")
           if (mediaType.includes('image')) {
             
             // Ensure directories exist
-            const imageDir = path.join(__dirname, '../../uploads/images');
-            const thumbnailDir = path.join(__dirname, '../../uploads/thumbnails');
+            const imageDir = path.join('/var/www/neo/neoapis/uploads/images');;//path.join(__dirname, '../../uploads/images');
+            const thumbnailDir = path.join('/var/www/neo/neoapis/uploads/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
             ensureDirExists(imageDir);
             ensureDirExists(thumbnailDir);
 
@@ -59,7 +59,7 @@ console.log("There is a file uploaded")
 
           } else {
             // Ensure directory exists
-            const docDir = path.join(__dirname, '../../uploads/documents');
+            const docDir = path.join('/var/www/neo/neoapis/uploads/documents');//path.join(__dirname, '../../uploads/documents');
             ensureDirExists(docDir);
 
             // Save document
