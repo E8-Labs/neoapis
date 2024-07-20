@@ -5,6 +5,13 @@ import dotenv from 'dotenv'
 import nodeCron from 'node-cron'
 
 import db from './src/models/index.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Define __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // import callRouter from './src/routes/call.route.js';
 import UserRouter from './src/routes/user.route.js'
@@ -16,6 +23,8 @@ dotenv.config();
 const app = express()
 app.use(cors())
 app.use(express.json())
+
+app.use('/neo/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 app.use((req, res, next) => {

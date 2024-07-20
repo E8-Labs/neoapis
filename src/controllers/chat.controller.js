@@ -46,14 +46,16 @@ console.log("There is a file uploaded")
             // Save image
             const imagePath = path.join(imageDir, mediaFilename);
             fs.writeFileSync(imagePath, mediaBuffer);
-            image = `/uploads/images/${mediaFilename}`;
-
+            // image = `/uploads/images/${mediaFilename}`;
+            image = `https://www.blindcircle.com:444/neo/uploads/images/${mediaFilename}`;
             // Generate and save thumbnail
             const thumbnailBuffer = await generateThumbnail(mediaBuffer);
             const thumbnailFilename = `${Date.now()}_thumb${mediaExt}`;
             const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
             fs.writeFileSync(thumbnailPath, thumbnailBuffer);
-            thumbnail = `/uploads/thumbnails/${thumbnailFilename}`;
+            // thumbnail = `/uploads/thumbnails/${thumbnailFilename}`;
+            thumbnail = `https://www.blindcircle.com:444/neo/uploads/thumbnails/${thumbnailFilename}`;
+
           } else {
             // Ensure directory exists
             const docDir = path.join(__dirname, '../../uploads/documents');
@@ -62,7 +64,8 @@ console.log("There is a file uploaded")
             // Save document
             const docPath = path.join(docDir, mediaFilename);
             fs.writeFileSync(docPath, mediaBuffer);
-            doc = `/uploads/documents/${mediaFilename}`;
+            // doc = `/uploads/documents/${mediaFilename}`;
+            doc = `https://www.blindcircle.com:444/neo/uploads/documents/${mediaFilename}`;
           }
         }
 
