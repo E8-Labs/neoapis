@@ -25,7 +25,8 @@ const sendMessage = async (req, res) => {
     if (authData) {
       try {
         const { content, chatId } = req.body;
-        let file = req.file;
+        console.log(req.files.media)
+        let file = req.files.media[0];
         let image = null, thumbnail = null, doc = null;
 
         if (file) {
@@ -33,14 +34,15 @@ const sendMessage = async (req, res) => {
           const mediaType = file.mimetype;
           const mediaExt = path.extname(file.originalname);
           const mediaFilename = `${Date.now()}${mediaExt}`;
-
+console.log("There is a file uploaded")
           if (mediaType.includes('image')) {
+            
             // Ensure directories exist
             const imageDir = path.join(__dirname, '../../uploads/images');
             const thumbnailDir = path.join(__dirname, '../../uploads/thumbnails');
             ensureDirExists(imageDir);
             ensureDirExists(thumbnailDir);
-            
+
             // Save image
             const imagePath = path.join(imageDir, mediaFilename);
             fs.writeFileSync(imagePath, mediaBuffer);
@@ -81,8 +83,9 @@ const sendMessage = async (req, res) => {
         let promptTokens = response.usage.prompt_tokens;
         let completionTokens = response.usage.completion_tokens;
 
-        console.log("Image saved ", image);
-        console.log("Thumb saved ", thumbnail);
+        console.log("Image ", image);
+        console.log("Thumb", thumbnail);
+        // return res.send({status: true, data: { image, thumbnail, doc}})
         const message = await db.Message.create({
           content,
           senderType: 'user',
@@ -115,6 +118,7 @@ const sendMessage = async (req, res) => {
     }
   });
 };
+
 
 // const sendMessage = async (req, res) => {
 //   JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
