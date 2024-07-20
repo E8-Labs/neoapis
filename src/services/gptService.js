@@ -18,8 +18,10 @@ const sendMessageToGPT = async (message, previousMessages, media = null) => {
             { type: "text", text: message },
             {
               type: "image_url",
-              image_url:
-                media,
+              image_url:{
+                url: media,
+              }
+                
             },
           ],
         },]
