@@ -40,7 +40,7 @@ const sendMessage = async (req, res) => {
             const thumbnailDir = path.join(__dirname, '../../uploads/thumbnails');
             ensureDirExists(imageDir);
             ensureDirExists(thumbnailDir);
-
+            
             // Save image
             const imagePath = path.join(imageDir, mediaFilename);
             fs.writeFileSync(imagePath, mediaBuffer);
@@ -81,6 +81,8 @@ const sendMessage = async (req, res) => {
         let promptTokens = response.usage.prompt_tokens;
         let completionTokens = response.usage.completion_tokens;
 
+        console.log("Image saved ", image);
+        console.log("Thumb saved ", thumbnail);
         const message = await db.Message.create({
           content,
           senderType: 'user',
