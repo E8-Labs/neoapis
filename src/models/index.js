@@ -2,7 +2,7 @@ import dbConfig from "../config/db.config.js";
 import CallModel from "./call.model.js";
 import User from "./user.model.js";
 import Project from "./Project.model.js";
-import Team from "./Team.model.js";
+// import Team from "./Team.model.js";
 import { Chat } from "./chat/chat.model.js";
 import { Message } from "./chat/message.model.js";
 import Invitation from './invitation.model.js'
@@ -52,9 +52,9 @@ db.Message.belongsTo(db.Chat, {foreignKey: 'chatId', as: "Chat"})
 db.Chat.hasMany(db.Message, {foreignKey: 'chatId', as: 'Messages'})
 
 
-db.Team = Team(sequelize, Sequelize);
-db.User.hasMany(db.Team, {foreignKey: "userId", as: "Teams"})
-db.Team.belongsTo(db.User, {foreignKey: "userId", as: "User"})
+// db.Team = Team(sequelize, Sequelize);
+// db.User.hasMany(db.Team, {foreignKey: "userId", as: "Teams"})
+// db.Team.belongsTo(db.User, {foreignKey: "userId", as: "User"})
 
 
 

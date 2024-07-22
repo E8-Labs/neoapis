@@ -19,7 +19,15 @@ const Invitation = (sequelize, Sequelize) => {
           type: Sequelize.STRING,  //pending
           allowNull: false,
           defaultValue: 'pending'
-        }
+        },
+        name: {
+            type: Sequelize.STRING,
+            defaultValue: ''
+          },
+          role: {
+            type: Sequelize.STRING,
+            defaultValue: ""
+          }
       });
       
     //   Project.belongsTo(User, { foreignKey: 'userId' });

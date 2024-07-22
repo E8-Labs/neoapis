@@ -9,6 +9,7 @@ import axios from "axios";
 import chalk from "chalk";
 import nodemailer from 'nodemailer'
 import UserProfileFullResource from '../resources/userprofilefullresource.js'
+import TeamResource from "../resources/teamresource.js";
 // import nodemailer from 'nodemailer'
 // import NotificationType from '../models/user/notificationtype.js'
 // import {createThumbnailAndUpload, uploadMedia, deleteFileFromS3} from '../utilities/storage.js'
@@ -81,6 +82,28 @@ export const LoginUser = async (req, res) => {
     }
 }
 
+export const getInvitedUsers = async(req, res)=> {
+    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+        if (authData) {
+            let userId = authData.user.id;
+            let user = await db.User.findByPk(userId)
+            let teamMembers = await db.Invitation.findAll({
+                where: {
+                    [Op.or]: [
+                        {fromUser: userId},
+                        {toUser: userId},
+                        {toUserEmail: user.email}
+                    ]
+                }
+            })
+            let resource = await TeamResource(teamMembers)
+            res.send({ status: true, message: "Team list", data: resource })
+        }
+        else{
+            res.send({ status: false, message: "Unauthenticated user", data: null })
+        }
+    })
+}
 
 export const InviteUser = async (req, res) => {
     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
@@ -90,12 +113,27 @@ export const InviteUser = async (req, res) => {
             if (user) {
                 let toUserId = req.body.toUserId || null;
                 let toUserEmail = req.body.toUserEmail || null;
+                let name = req.body.name;
+                let role = req.body.role;
+
+                if(toUserEmail){
+                    let invitedUser = await db.User.findOne({
+                        where: {
+                            email: toUserEmail
+                        }
+                    })
+                    if(invitedUser){
+                        toUserId = invitedUser.id
+                    }
+                }
                 console.log("To User Eamil is ", req.body)
-                if (toUserId) {
+                if (toUserId) { // if the user is on the app already
                     let inv = await db.Invitation.create({
                         fromUser: userId,
                         toUser: toUserId,
-                        status: 'pending'
+                        status: 'pending', 
+                        name: name,
+                        role: role
                     })
                     res.send({ status: true, message: "Invitation sent", data: inv })
                 }
@@ -104,7 +142,9 @@ export const InviteUser = async (req, res) => {
                     let inv = await db.Invitation.create({
                         fromUser: userId,
                         toUserEmail: toUserEmail,
-                        status: 'pending'
+                        status: 'pending', 
+                        name: name,
+                        role: role
                     })
                     let sent = await sendEmail(inv.id, user.name ? user.name : user.email, toUserEmail)
                     res.send({ status: true, message: "Invitation sent to mail", data: inv })
