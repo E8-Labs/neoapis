@@ -34,25 +34,25 @@ app.use((req, res, next) => {
     next();
   });
   
-  // app.use(cors({
-  //   origin: 'https://neoai-ebon.vercel.app',
-  //   methods: ['GET', 'POST'],
-  //   allowedHeaders: ['Content-Type', 'Authorization'],
-  //   credentials: true
-  // }));
+  app.use(cors({
+    origin: 'https://neoai-ebon.vercel.app',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  }));
   
-  // app.options('*', (req, res) => {
-  //   res.header('Access-Control-Allow-Origin', 'https://neoai-ebon.vercel.app');
-  //   res.header('Access-Control-Allow-Methods', 'GET, POST');
-  //   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  //   res.header('Access-Control-Allow-Credentials', 'true');
-  //   res.sendStatus(200);
-  // });
+  app.options('*', (req, res) => {
+    res.header('Access-Control-Allow-Origin', 'https://neoai-ebon.vercel.app');
+    res.header('Access-Control-Allow-Methods', 'GET, POST');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.sendStatus(200);
+  });
 
-  // app.use((err, req, res, next) => {
-  //   console.error(err.stack);
-  //   res.status(500).send('Something broke!');
-  // });
+  app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+  });
 
 
 db.sequelize.sync({alter: true})

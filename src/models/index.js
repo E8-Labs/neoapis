@@ -5,6 +5,7 @@ import Project from "./Project.model.js";
 import Team from "./Team.model.js";
 import { Chat } from "./chat/chat.model.js";
 import { Message } from "./chat/message.model.js";
+import Invitation from './invitation.model.js'
 
 
 
@@ -37,6 +38,8 @@ db.CallModel = CallModel(sequelize, Sequelize);
 db.Project = Project(sequelize, Sequelize);
 db.User.hasMany(db.Project, {foreignKey: "userId", as: "Projects"})
 db.Project.belongsTo(db.User, {foreignKey: "userId", as: "User"})
+
+db.Invitation = Invitation(sequelize, Sequelize);
 
 
 db.Chat = Chat(sequelize, Sequelize);
