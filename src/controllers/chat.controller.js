@@ -25,10 +25,10 @@ const sendMessage = async (req, res) => {
     if (authData) {
       try {
         const { content, chatId } = req.body;
-        console.log(req.files.media)
+        console.log(req.files)
         
         let image = null, thumbnail = null, doc = null;
-        if (req.files) {
+        if (req.files.media) {
           let file = req.files.media[0];
           
           const mediaBuffer = file.buffer;
