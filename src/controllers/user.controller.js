@@ -115,6 +115,9 @@ export const InviteUser = async (req, res) => {
                 let toUserEmail = req.body.toUserEmail || null;
                 let name = req.body.name;
                 let role = req.body.role;
+                console.log("Email is ", req.body.toUserEmail)
+                console.log("Name is ", req.body.name)
+                console.log("Role is ", req.body.role)
 
                 if(toUserEmail){
                     let invitedUser = await db.User.findOne({
