@@ -133,7 +133,8 @@ const getMessages = async (req, res) => {
     if (authData) {
       let messages = await db.Message.findAll({
         where: {
-          chatId: chatId
+          chatId: chatId,
+          visibility: "visible"
         }
       })
 
