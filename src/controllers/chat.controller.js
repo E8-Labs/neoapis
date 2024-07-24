@@ -128,7 +128,7 @@ console.log("There is a file uploaded")
 
 
 const getMessages = async (req, res) => {
-  const {chatId} = req.body
+  const chatId = req.query.chatId
   JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
     if (authData) {
       let messages = await db.Message.findAll({
