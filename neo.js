@@ -34,15 +34,16 @@ app.use((req, res, next) => {
     next();
   });
   
+  //'https://neo-ai-nu.vercel.app',// my project
   app.use(cors({
-    origin: 'https://neo-ai-nu.vercel.app',//'https://neoai-ebon.vercel.app',
+    origin: 'https://neoai-ebon.vercel.app',
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
   }));
   
   app.options('*', (req, res) => {
-    res.header('Access-Control-Allow-Origin', 'https://neo-ai-nu.vercel.app');//'https://neoai-ebon.vercel.app');
+    res.header('Access-Control-Allow-Origin', 'https://neoai-ebon.vercel.app');
     res.header('Access-Control-Allow-Methods', 'GET, POST');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.header('Access-Control-Allow-Credentials', 'true');
