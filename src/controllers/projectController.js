@@ -157,11 +157,13 @@ Setup Instructions:
 
 You can access the example code structure in your knowledge base Step 10 Code Structure Examples.txt
 
-Here are some of the details that user wants to add
-App Idea: ${appIdea}
-Audience: ${targettedAudience}
-App Name: ${projectName}
+
 `
+
+// Here are some of the details that user wants to add
+// App Idea: ${appIdea}
+// Audience: ${targettedAudience}
+// App Name: ${projectName}
                 // Create a chat for the project
                 const chat = await db.Chat.create({ projectId: project.id });
 
