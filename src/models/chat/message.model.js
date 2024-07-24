@@ -37,6 +37,10 @@ export const Message = (sequelize, Sequelize)=> {
             allowNull: true,
             defaultValue: "stop"
           },
+          visibility: {
+            type: Sequelize.STRING,
+            defaultValue: "visible"
+          }
       });
 
       return Message
