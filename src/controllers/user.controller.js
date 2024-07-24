@@ -82,6 +82,38 @@ export const LoginUser = async (req, res) => {
     }
 }
 
+
+export const acceptRejectInvitation = async(req, res) => {
+    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+        if (authData) {
+            let userId = authData.user.id
+            let user = await db.User.findByPk(userId)
+            if(user){
+                let status = req.body.status; //accepted, rejected
+                let inviteId = req.body.inviteId;
+                let invite = await db.Invitation.findByPk(inviteId);
+                if(invite){
+                    if(invite.toUserEmail == user.email || invite.toUser == user.id){
+                        invite.status = status
+                    }
+                    await invite.save();
+                    res.send({ status: true, message: "Invitation accepted", data: null })
+                }
+                else{
+                    res.send({ status: false, message: "Invitation doesn't exist", data: null })
+                }
+
+            }
+            else{
+                res.send({ status: false, message: "No such user", data: null })
+            }
+        }
+        else{
+            res.send({ status: false, message: "Unauthenticated user", data: null })
+        }
+    })
+}
+
 export const getInvitedUsers = async(req, res)=> {
     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
         if (authData) {

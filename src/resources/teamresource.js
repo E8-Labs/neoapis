@@ -30,8 +30,10 @@ async function getUserData(p, currentUser = null) {
         id: p.id,
         toUserEmail: p.toUserEmail,
         status: p.status,
+        name: p.name,
+        role: p.role,
         fromUser: await UserProfileFullResource(fromUser),
-        toUser: await UserProfileFullResource(toUser),
+        toUser: toUser ? await UserProfileFullResource(toUser): toUser,
     }
 
 
