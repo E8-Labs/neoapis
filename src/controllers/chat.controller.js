@@ -5,19 +5,10 @@ import JWT from 'jsonwebtoken'
 
 import fs from 'fs';
 import path from 'path';
-import  {generateThumbnail}  from '../utils/generateThumbnail.js';
-import { fileURLToPath } from 'url';
-
-// Define __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { generateThumbnail, ensureDirExists } from '../utils/generateThumbnail.js';
 
 
-const ensureDirExists = (dirPath) => {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-};
+
 
 const sendMessage = async (req, res) => {
   console.log("Send message API called");
@@ -26,18 +17,18 @@ const sendMessage = async (req, res) => {
       try {
         const { content, chatId } = req.body;
         console.log(req.files)
-        
+
         let image = null, thumbnail = null, doc = null;
         if (req.files.media) {
           let file = req.files.media[0];
-          
+
           const mediaBuffer = file.buffer;
           const mediaType = file.mimetype;
           const mediaExt = path.extname(file.originalname);
           const mediaFilename = `${Date.now()}${mediaExt}`;
-console.log("There is a file uploaded")
+          console.log("There is a file uploaded")
           if (mediaType.includes('image')) {
-            
+
             // Ensure directories exist
             const imageDir = path.join('/var/www/neo/neoapis/uploads/images');;//path.join(__dirname, '../../uploads/images');
             const thumbnailDir = path.join('/var/www/neo/neoapis/uploads/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
@@ -140,7 +131,7 @@ const getMessages = async (req, res) => {
 
       return res.json({ status: true, message: "messages list", data: messages });
     }
-    else{
+    else {
       res.json({ error: 'Server Error', status: false, message: "Unauthenticated user", data: null });
     }
 

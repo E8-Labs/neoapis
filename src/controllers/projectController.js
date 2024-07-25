@@ -4,6 +4,10 @@ import db from '../models/index.js';
 import JWT from "jsonwebtoken";
 import { sendMessageToGPT } from '../services/gptService.js';
 
+import fs from 'fs';
+import path from 'path';
+import { generateThumbnail, ensureDirExists } from '../utils/generateThumbnail.js';
+import { fileURLToPath } from 'url';
 
 import { sendMessage } from './chat.controller.js';
 // const Project = db.Project;
@@ -21,7 +25,7 @@ const createProject = async (req, res) => {
                     projectName,
                     userId: authData.user.id
                 });
-                
+
                 let prompt = `Your name is Neo and technical cofounder and developer. 
 
 You're assisting entrepreneurs in refining and developing their app ideas using React Native on Snack Expo. Neo will leverage the full capabilities of React Native and the UI component libraries provided by Snack Expo. At each step, Neo engages with the founders to confirm the direction of the app idea, thinking through use cases, features, monetization strategies, and more. Founders can provide feedback and modify suggestions to align with their vision. Remember, you're a technical co-founder as well, so think critically about the suggested features and use cases. Don't just accept the user feedback but also challenge and give direction and your creative/technical reasoning as to why you suggest such things. Make sure you get feedback from the users that are building their app at each of the steps. For example, ea step needs a response from the founder before you continue. 
@@ -160,10 +164,10 @@ You can access the example code structure in your knowledge base Step 10 Code St
 
 `
 
-// Here are some of the details that user wants to add
-// App Idea: ${appIdea}
-// Audience: ${targettedAudience}
-// App Name: ${projectName}
+                // Here are some of the details that user wants to add
+                // App Idea: ${appIdea}
+                // Audience: ${targettedAudience}
+                // App Name: ${projectName}
                 // Create a chat for the project
                 const chat = await db.Chat.create({ projectId: project.id });
 
@@ -174,15 +178,15 @@ You can access the example code structure in your knowledge base Step 10 Code St
                 let promptTokens = response.usage.prompt_tokens;
                 let completionTokens = response.usage.completion_tokens;
 
-              
+
                 const message = await db.Message.create({
                     content: prompt,
                     senderType: 'user',
                     chatId: chat.id,
                     userId: authData.user.id,
-                    image:  null,
-                    imageThumb:  null,
-                    docUrl:  null,
+                    image: null,
+                    imageThumb: null,
+                    docUrl: null,
                     tokens: promptTokens,
                     visibility: "hidden"
                 });
@@ -214,29 +218,78 @@ You can access the example code structure in your knowledge base Step 10 Code St
 
 
 
-// const getUserProjects = async (req, res) => {
-//     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
-//         if (authData) {
-//             try {
 
-//                 let projects = await db.Project.findAll({
-//                     where: {
-//                         userId: authData.user.id
-//                     }
-//                 })
 
-//                 res.status(201).json({ status: true, message: "Project created", data: await ProjectResource(projects)});
-//               } catch (error) {
-//                 console.log("Error Create Project: ", error)
-//                 res.status(500).json({ error: 'Server Error', status: false, message: error.message });
-//               }
-//         }
-//         else{
-//             res.status(500).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
-//         }
-//     })
+export const UpdateProject = async (req, res) => {
+    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+        if (authData) {
+            try {
+                let projectId = req.body.projectId;
+                let project = await db.Project.findByPk(projectId)
+                if (project) {
+                    if (req.body.projectName) {
+                        project.projectName = req.body.projectName;
+                    }
+                    let image = null, thumbnail = null, doc = null;
+                    if (req.files.media) {
+                        let file = req.files.media[0];
 
-// };
+                        const mediaBuffer = file.buffer;
+                        const mediaType = file.mimetype;
+                        const mediaExt = path.extname(file.originalname);
+                        const mediaFilename = `${Date.now()}${mediaExt}`;
+                        console.log("There is a file uploaded")
+                        if (mediaType.includes('image')) {
+
+                            // Ensure directories exist
+                            let dir = "/var/www/neo/neoapis/uploads"//"../uploads"//
+
+                            const imageDir = path.join(dir + '/images');;//path.join(__dirname, '../../uploads/images');
+                            const thumbnailDir = path.join(dir + '/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
+                            ensureDirExists(imageDir);
+                            ensureDirExists(thumbnailDir);
+
+                            // Save image
+                            const imagePath = path.join(imageDir, mediaFilename);
+                            fs.writeFileSync(imagePath, mediaBuffer);
+                            // image = `/uploads/images/${mediaFilename}`;
+                            image = `https://www.blindcircle.com:444/neo/uploads/images/${mediaFilename}`;
+                            // Generate and save thumbnail
+                            const thumbnailBuffer = await generateThumbnail(mediaBuffer);
+                            const thumbnailFilename = `${Date.now()}_thumb${mediaExt}`;
+                            const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
+                            fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+                            // thumbnail = `/uploads/thumbnails/${thumbnailFilename}`;
+                            thumbnail = `https://www.blindcircle.com:444/neo/uploads/thumbnails/${thumbnailFilename}`;
+
+                            project.projectImage = image;
+                            project.projectImageThumb = thumbnail;
+
+
+                        } else {
+
+                        }
+                    }
+                    let saved = project.save();
+
+                    res.status(200).json({ status: true, message: "Project updated", data: await ProjectResource(project) });
+                }
+                else {
+                    res.status(404).json({ status: true, message: "Project not found", data: null });
+                }
+
+
+            } catch (error) {
+                console.log("Error Create Project: ", error)
+                res.status(500).json({ error: 'Server Error', status: false, message: error.message });
+            }
+        }
+        else {
+            res.status(500).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
+        }
+    })
+
+};
 const getUserProjects = async (req, res) => {
     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
         if (authData) {

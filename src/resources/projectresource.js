@@ -33,7 +33,9 @@ async function getUserData(p, currentUser = null) {
         email: p.email,
         phone: p.phone,
         user: await UserProfileFullResource(user),
-        chat: chat
+        chat: chat,
+        projectImage: p.projectImage,
+        projectImageThumb: p.projectImageThumb
         
     }
 

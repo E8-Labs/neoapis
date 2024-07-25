@@ -12,7 +12,15 @@ const Project = (sequelize, Sequelize) => {
         projectName: {
           type: Sequelize.STRING,
           allowNull: false
-        }
+        },
+        projectImage: {
+          type: Sequelize.STRING,
+          allowNull: true
+        },
+        projectImageThumb: {
+          type: Sequelize.STRING,
+          allowNull: true
+        },
       });
       
     //   Project.belongsTo(User, { foreignKey: 'userId' });
