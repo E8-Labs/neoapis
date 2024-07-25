@@ -155,7 +155,7 @@ export const DownloadInvoice = async(req, res) => {
                 }
             })
             if(t && (t.invoiceUrl != null && t.invoiceUrl != '')){
-                res.send({ status: true, message: "Invoice already generated", data: {url: t} })
+                res.send({ status: true, message: "Invoice already generated", data: {url: t.invoiceUrl} })
             }
             else{
                 let url = await stripe.createInvoicePdf(invoiceId)
