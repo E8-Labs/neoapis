@@ -242,7 +242,7 @@ export const UpdateProject = async (req, res) => {
                         if (mediaType.includes('image')) {
 
                             // Ensure directories exist
-                            let dir = "/var/www/neo/neoapis/uploads"//"../uploads"//
+                            let dir = "/var/www/neo/neoapis/uploads"//"uploads"//
 
                             const imageDir = path.join(dir + '/images');;//path.join(__dirname, '../../uploads/images');
                             const thumbnailDir = path.join(dir + '/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');

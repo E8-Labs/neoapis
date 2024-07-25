@@ -10,14 +10,8 @@ import chalk from "chalk";
 import nodemailer from 'nodemailer'
 import UserProfileFullResource from '../resources/userprofilefullresource.js'
 import TeamResource from "../resources/teamresource.js";
-// import nodemailer from 'nodemailer'
-// import NotificationType from '../models/user/notificationtype.js'
-// import {createThumbnailAndUpload, uploadMedia, deleteFileFromS3} from '../utilities/storage.js'
-// import crypto from 'crypto'
-// import { fetchOrCreateUserToken } from "./plaid.controller.js";
-// const fs = require("fs");
-// var Jimp = require("jimp");
-// require("dotenv").config();
+import * as stripe from '../services/stripe.js'
+
 const User = db.User;
 const Op = db.Sequelize.Op;
 
@@ -64,6 +58,7 @@ export const LoginUser = async (req, res) => {
             }
         }
         const result = await SignUser(user);
+        let customer = await stripe.createCustomer(user, "loginuser");
         return res.send({ status: true, message: "User registered", data: result })
     }
     else {
@@ -73,6 +68,7 @@ export const LoginUser = async (req, res) => {
             // result == true
             if (result) {
                 const result = await SignUser(user);
+                let customer = await stripe.createCustomer(user, "loginuser");
                 return res.send({ status: true, message: "User logged in", data: result })
             }
             else {
