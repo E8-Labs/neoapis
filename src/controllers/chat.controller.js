@@ -30,8 +30,9 @@ const sendMessage = async (req, res) => {
           if (mediaType.includes('image')) {
 
             // Ensure directories exist
-            const imageDir = path.join('/var/www/neo/neoapis/uploads/images');;//path.join(__dirname, '../../uploads/images');
-            const thumbnailDir = path.join('/var/www/neo/neoapis/uploads/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
+            let dir = process.env.DocsDir///var/www/neo/neoapis/uploads
+            const imageDir = path.join(dir + '/images');;//path.join(__dirname, '../../uploads/images');
+            const thumbnailDir = path.join(dir + '/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
             ensureDirExists(imageDir);
             ensureDirExists(thumbnailDir);
 

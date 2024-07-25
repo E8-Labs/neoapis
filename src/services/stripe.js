@@ -3,6 +3,10 @@ import axios from 'axios';
 import qs from 'qs'
 import db from "../models/index.js";
 
+import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from'path';
+// import logo from '../assets/applogo.png'
 
 
 export const SubscriptionTypesSandbox = [
@@ -30,9 +34,12 @@ export const createCustomer = async (user, whoami = "default") => {
         const stripe = StripeSdk(key);
         let alreadyCustomer = await findCustomer(user)
         console.log("Customer is ", alreadyCustomer)
-
+        let u = await db.User.findByPk(user.id)
         if (alreadyCustomer.data.length >= 1) {
-            //console.log("Already found ", alreadyCustomer)
+            console.log("Already found ")
+            u.customerId = alreadyCustomer.data[0].id;
+            let updated = await u.save()
+            console.log("Returning Already customer")
             return alreadyCustomer.data[0]
         }
         else {
@@ -41,7 +48,10 @@ export const createCustomer = async (user, whoami = "default") => {
                 email: user.email,
                 metadata: { id: user.id, dob: user.dob || '', image: user.profile_image || '', points: user.points }
             });
+
             console.log("Customer New ", customer)
+            u.customerId = customer.id;
+            await u.save();
             return customer
         }
 
@@ -49,7 +59,7 @@ export const createCustomer = async (user, whoami = "default") => {
         // return customer
     }
     catch (error) {
-        //console.log(error)
+        console.log(error)
         return null
     }
 }
@@ -213,6 +223,7 @@ export const createSubscription = async (user, subscription, code = null) => {
     const stripe = StripeSdk(key);
     try {
         let customer = await createCustomer(user, "createsub");
+        console.log("Customer in subs is ", customer)
         let data = {
             customer: customer.id,
             items: [
@@ -323,32 +334,56 @@ export const SubscriptionUpdated = async (req, res)=>{
     let type = data.type;
     console.log("EVent is ", type);
 
-    if(type === "customer.subscription.updated" || type === 'customer.subscription.pending_update_expired'
-    || type === 'customer.subscription.paused' || type === 'customer.subscription.resumed' || 
-    type === 'customer.subscription.pending_update_applied' ){
-        let sub = data.data.object;
-        let subid = sub.id;
-        let dbSub = await db.subscriptionModel.findOne({
-            where:{
-                subid: subid
-            }
-        })
-        //console.log("Sub from db ", dbSub)
-        if(dbSub){
-            dbSub.data = JSON.stringify(sub)
-            dbSub.save(); 
-        }
+
+    switch (type) {
+        case 'customer.subscription.created':
+            console.log("Subscription created")
+            // await handleSubscriptionCreated(event.data.object);
+            break;
+        case 'customer.subscription.updated':
+            await handleSubscriptionUpdated(data.data.object);
+            break;
+        case 'customer.subscription.deleted':
+            await handleSubscriptionDeleted(data.data.object);
+            break;
+        case 'customer.subscription.paused':
+            await handleSubscriptionPaused(data.data.object);
+            break;
+        case 'customer.subscription.resumed':
+            await handleSubscriptionResumed(data.data.object);
+            break;
+        case 'customer.subscription.pending_update_applied':
+            await handleSubscriptionPendingUpdateApplied(data.data.object);
+            break;
+        case 'customer.subscription.pending_update_expired':
+            await handleSubscriptionPendingUpdateExpired(data.data.object);
+            break;
+        case 'invoice.payment_succeeded':
+        case 'invoice.payment_failed':
+            const invoice = data.data.object;
+            
+            let subId = invoice.subscription;
+            let sub = db.SubscriptionModel.findOne({
+                where: {
+                    subid: subId
+                }
+            })
+            let status = type === 'invoice.payment_succeeded' ? 'succeeded' : 'failed'
+
+            // console.log()
+            await db.TransactionModel.create({
+                customerId: invoice.customer,
+                subscriptionId: subId,//invoice.subscription,
+                amount: invoice.amount_paid / 100,
+                currency: invoice.currency,
+                status: status,
+                invoiceId: invoice.id
+            });
+        default:
+            console.log(`Unhandled event type ${type}`);
     }
-    if(type === "customer.subscription.deleted"){
-        let sub = data.data.object;
-        let subid = sub.id;
-        let dbSub = await db.subscriptionModel.destroy({
-            where:{
-                subid: subid
-            }
-        })
-        //console.log("Subscription deleted")
-    }
+
+
     res.send({status: true, message: "Subscription updated", event: type})
 }
 export const RetrieveASubscriptions = async (subid) => {
@@ -377,19 +412,31 @@ export const GetActiveSubscriptions = async (user) => {
 
     try {
         const stripe = StripeSdk(key);
-        let customer = await createCustomer(user, "getactivesub");
-        const sub = await stripe.subscriptions.list({
-            customer: customer.id,
-            status: 'active'
-        });
+        let active = await db.SubscriptionModel.findAll({
+            where: {
+                UserId: user.id,
+                [db.Sequelize.Op.or]: [
+                    {status: "active"},
+                    {status: "trialing"}
+                ]
+            }
+        })
+        if(active && active.length > 0){
+            return active
+        }
+        // let customer = await createCustomer(user, "getactivesub");
+        // const sub = await stripe.subscriptions.list({
+        //     customer: customer.id,
+        //     status: 'active'
+        // });
         //console.log("##############")
         //console.log("Subscriptions for user  ", user.email)
         //console.log("Customer id", customer.id)
         //console.log("##############")
-        return sub
+        // return sub
     }
     catch (error) {
-        //console.log(error)
+        console.log(error)
         return null
     }
 }
@@ -468,3 +515,235 @@ export const loadCards = async (user) => {
 
 
 }
+
+
+//function that parses the subscription object and retrieves only desired info to show to the user
+// status of the subscription // active, cancelled, trialing, paused etc
+// isTrial: true or false
+// trialRemainingDays: 0 or more
+// daysTillExpiry: 0 or more
+// subscriptionType: yearly, monthly, weekly
+// willRenewAtPeriodEnd: true or false
+// price: in US dollar
+// startDate: mm-dd-yyyy
+// discountApplied: true or false
+// discountedPrice: price charged after discount
+// DiscountCodeUsed: Code If available
+export function parseSubscription(subscription) {
+    const status = subscription.status;
+    const isTrial = subscription.status === 'trialing';
+    const trialRemainingDays = subscription.trial_end ? Math.max(0, Math.ceil((subscription.trial_end - Date.now() / 1000) / 86400)) : 0;
+    const daysTillExpiry = subscription.current_period_end ? Math.max(0, Math.ceil((subscription.current_period_end - Date.now() / 1000) / 86400)) : 0;
+
+    let subscriptionType = '';
+    if (subscription.items && subscription.items.data.length > 0) {
+        const interval = subscription.items.data[0].plan.interval;
+        switch (interval) {
+            case 'month':
+                subscriptionType = 'monthly';
+                break;
+            case 'year':
+                subscriptionType = 'yearly';
+                break;
+            case 'week':
+                subscriptionType = 'weekly';
+                break;
+            default:
+                subscriptionType = 'unknown';
+        }
+    }
+
+    const willRenewAtPeriodEnd = !subscription.cancel_at_period_end;
+    const price = subscription.items && subscription.items.data.length > 0 ? (subscription.items.data[0].plan.amount / 100).toFixed(2) : '0.00';
+
+    const startDate = new Date(subscription.start_date * 1000).toLocaleDateString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
+    });
+
+    const discountApplied = subscription.discount !== null;
+    const discountedPrice = discountApplied ? (subscription.items.data[0].plan.amount - (subscription.discount.coupon.amount_off || 0) / 100).toFixed(2) : price;
+    const discountCodeUsed = discountApplied ? subscription.discount.coupon.id : null;
+
+    return {
+        status,
+        isTrial,
+        trialRemainingDays,
+        daysTillExpiry,
+        subscriptionType,
+        willRenewAtPeriodEnd,
+        price,
+        startDate,
+        discountApplied,
+        discountedPrice,
+        discountCodeUsed
+    };
+}
+
+
+
+const handleSubscriptionCreated = async (subscription) => {
+    await db.SubscriptionModel.create({
+        subid: subscription.id,
+        userId: subscription.customer,
+        customerId: "",//subscription.customer,
+        status: subscription.status,
+        data: JSON.stringify(subscription)
+    });
+    console.log(`Subscription created: ${subscription.id}`);
+};
+
+const handleSubscriptionUpdated = async (subscription) => {
+    await db.SubscriptionModel.update(
+        { status: subscription.status, data: JSON.stringify(subscription) },
+        { where: { subid: subscription.id } }
+    );
+    console.log(`Subscription updated: ${subscription.id}`);
+};
+
+const handleSubscriptionDeleted = async (subscription) => {
+    await db.SubscriptionModel.update(
+        { status: 'deleted', data: JSON.stringify(subscription) },
+        { where: { subid: subscription.id } }
+    );
+    console.log(`Subscription deleted: ${subscription.id}`);
+};
+
+const handleSubscriptionPaused = async (subscription) => {
+    await db.SubscriptionModel.update(
+        { status: 'paused', data: JSON.stringify(subscription) },
+        { where: { subid: subscription.id } }
+    );
+    console.log(`Subscription paused: ${subscription.id}`);
+};
+
+const handleSubscriptionResumed = async (subscription) => {
+    await db.SubscriptionModel.update(
+        { status: 'resumed', data: JSON.stringify(subscription) },
+        { where: { subid: subscription.id } }
+    );
+    console.log(`Subscription resumed: ${subscription.id}`);
+};
+
+const handleSubscriptionPendingUpdateApplied = async (subscription) => {
+    await db.SubscriptionModel.update(
+        { status: 'pending_update_applied', data: JSON.stringify(subscription) },
+        { where: { subid: subscription.id } }
+    );
+    console.log(`Pending update applied to subscription: ${subscription.id}`);
+};
+
+const handleSubscriptionPendingUpdateExpired = async (subscription) => {
+    await db.SubscriptionModel.update(
+        { status: 'pending_update_expired', data: JSON.stringify(subscription) },
+        { where: { subid: subscription.id } }
+    );
+    console.log(`Pending update expired for subscription: ${subscription.id}`);
+};
+
+
+
+
+export const createInvoicePdf = async (invoiceId) => {
+
+    let key = process.env.Environment === "Sandbox" ? process.env.STRIPE_SK_TEST : process.env.STRIPE_SK_PRODUCTION;
+    //console.log("Key is ", key)
+    const stripe = StripeSdk(key);
+    // Retrieve the invoice from Stripe
+    const invoice = await stripe.invoices.retrieve(invoiceId);
+
+    // Define the directory to store the PDF
+    let dir = process.env.DocsDir//'../uploads/documents'//'/var/www/neo/neoapis/uploads/documents'
+    const docDir = path.join(dir + "/documents");
+    
+    // Ensure the directory exists
+    if (!fs.existsSync(docDir)) {
+        fs.mkdirSync(docDir, { recursive: true });
+    }
+
+    // Define the file name and path
+    const mediaFilename = `${invoiceId}.pdf`;
+    const docPath = path.join(docDir, mediaFilename);
+
+    // Create a new PDF document
+    const doc = new PDFDocument();
+    doc.pipe(fs.createWriteStream(docPath));
+
+    // Add content to the PDF
+    // Header
+    doc
+        .image('src/assets/applogo.png', 50, 45, { width: 50 }) // Add your logo path
+        .fontSize(20)
+        .text('Neo AI', 110, 57)
+        .fontSize(10)
+        .text('123 Your Street', 200, 65, { align: 'right' })
+        .text('City, State, ZIP Code', 200, 80, { align: 'right' })
+        .text('Phone: (555) 555-5555', 200, 95, { align: 'right' })
+        .moveDown();
+
+    // Invoice title
+    doc
+        .fontSize(20)
+        .text('INVOICE', 50, 160);
+
+    // Invoice details
+    doc
+        .fontSize(10)
+        .text(`Invoice ID: ${invoice.id}`, 50, 200)
+        .text(`Invoice Date: ${new Date(invoice.created * 1000).toLocaleDateString()}`, 50, 215)
+        .text(`Due Date: ${new Date(invoice.due_date * 1000).toLocaleDateString()}`, 50, 230)
+        .moveDown();
+
+    // Customer details
+    doc
+        .text(`Bill To:`, 50, 270)
+        .text(`Customer ID: ${invoice.customer}`, 50, 285)
+        .moveDown();
+
+    // Table for items
+    const tableTop = 330;
+    const itemCodeX = 50;
+    const descriptionX = 260;
+    const amountX = 450;
+
+    doc
+        .fontSize(10)
+        .text('Item Code', itemCodeX, tableTop)
+        .text('Description', descriptionX, tableTop)
+        .text('Amount', amountX, tableTop);
+
+    const generateTableRow = (y, item) => {
+        doc
+            .fontSize(10)
+            .text(item.id, itemCodeX, y)
+            .text(item.description, descriptionX, y)
+            .text(`$${(item.amount / 100).toFixed(2)}`, amountX, y);
+    };
+
+    let y = tableTop + 25;
+    invoice.lines.data.forEach((item, index) => {
+        generateTableRow(y, item);
+        y += 25;
+    });
+
+    // Summary
+    doc
+        .fontSize(10)
+        .text(`Subtotal: $${(invoice.subtotal / 100).toFixed(2)}`, amountX, y + 25)
+        .text(`Tax: $${(invoice.tax / 100).toFixed(2)}`, amountX, y + 40)
+        .text(`Total: $${(invoice.total / 100).toFixed(2)}`, amountX, y + 55)
+        .moveDown();
+
+    // Footer
+    doc
+        .text('Thank you for your business!', 50, y + 100, { align: 'center', width: 500 });
+
+    // Finalize the PDF
+    doc.end();
+
+    // Generate the URL to the PDF
+    const docUrl = `https://www.blindcircle.com:444/neo/uploads/documents/${mediaFilename}`;
+    
+    return docUrl;
+};

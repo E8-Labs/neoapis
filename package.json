@@ -28,6 +28,7 @@
     "nodemailer": "^6.9.14",
     "openai": "^4.52.7",
     "path": "^0.12.7",
+    "pdfkit": "^0.15.0",
     "sequelize": "^6.37.3",
     "sharp": "^0.33.4",
     "sqlite3": "^5.1.7",

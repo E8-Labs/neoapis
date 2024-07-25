@@ -7,6 +7,7 @@ import { Chat } from "./chat/chat.model.js";
 import { Message } from "./chat/message.model.js";
 import Invitation from './invitation.model.js'
 import SubscriptionModel from "./subscription.model.js";
+import TransactionModel from "./transaction.model.js";
 
 
 import Sequelize from 'sequelize'
@@ -56,6 +57,10 @@ db.Chat.hasMany(db.Message, {foreignKey: 'chatId', as: 'Messages'})
 db.SubscriptionModel = SubscriptionModel(sequelize, Sequelize);
 db.SubscriptionModel.belongsTo(db.User);
 db.User.hasMany(db.SubscriptionModel);
+
+db.TransactionModel = TransactionModel(sequelize, Sequelize);
+
+
 // db.Team = Team(sequelize, Sequelize);
 // db.User.hasMany(db.Team, {foreignKey: "userId", as: "Teams"})
 // db.Team.belongsTo(db.User, {foreignKey: "userId", as: "User"})

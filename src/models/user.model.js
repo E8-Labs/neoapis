@@ -25,6 +25,11 @@ const User = (sequelize, Sequelize) => {
         defaultValue: ''
         
       },
+      customerId: { // we store full size image here
+        type: Sequelize.STRING,
+        defaultValue: ''
+        
+      },
     });
   
     return User;

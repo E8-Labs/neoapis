@@ -2,7 +2,9 @@ import express from 'express'
 import { LoginUser, InviteUser, getInvitedUsers, acceptRejectInvitation } from '../controllers/user.controller.js'
 import verifyJwtToken from '../middleware/jwtmiddleware.js';
 
-import { AddCard, GetUserPaymentSources } from '../controllers/paymentController.js';
+import { AddCard, GetUserPaymentSources, subscribeUser, DownloadInvoice } from '../controllers/paymentController.js';
+
+import { SubscriptionUpdated } from '../services/stripe.js';
 
 
 
@@ -18,5 +20,9 @@ UserRouter.post("/handle_invitation", verifyJwtToken, acceptRejectInvitation);
 
 UserRouter.post("/add_card", verifyJwtToken, AddCard);
 UserRouter.get("/list_cards", verifyJwtToken, GetUserPaymentSources);
+UserRouter.post("/subscribe", verifyJwtToken, subscribeUser);
+UserRouter.post("/get_invoice", verifyJwtToken, DownloadInvoice);
+
+UserRouter.post("/neo_sub_updated", SubscriptionUpdated);
 
 export default UserRouter
