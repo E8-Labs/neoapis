@@ -22,8 +22,9 @@ export const SubscriptionTypesProduction = [
     { type: "Yearly", price: 49.99, id: "price_1P9VrLB5evLOKOQykDvowoG5", environment: "Production" },
 ]
 
-
+const AppSuffix = "Neo"
 export const createCustomer = async (user, whoami = "default") => {
+
 
     let key = process.env.Environment === "Sandbox" ? process.env.STRIPE_SK_TEST : process.env.STRIPE_SK_PRODUCTION;
     console.log("Key is create customer ", key)
@@ -45,8 +46,8 @@ export const createCustomer = async (user, whoami = "default") => {
         else {
             const customer = await stripe.customers.create({
                 name: user.name,
-                email: user.email,
-                metadata: { id: user.id, dob: user.dob || '', image: user.profile_image || '', points: user.points }
+                email: user.email + AppSuffix,
+                metadata: { id: user.id + AppSuffix, dob: user.dob || '', image: user.profile_image || '', points: user.points }
             });
 
             console.log("Customer New ", customer)
@@ -76,7 +77,7 @@ export const findCustomer = async (user) => {
         // }); 
 
         const customer = await stripe.customers.search({
-            query: `metadata['id']:'${user.id}'`
+            query: `metadata['id']:'${user.id}${AppSuffix}'`
         });
 
         return customer
