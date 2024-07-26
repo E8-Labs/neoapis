@@ -10,7 +10,10 @@ import chalk from "chalk";
 import nodemailer from 'nodemailer'
 import UserProfileFullResource from '../resources/userprofilefullresource.js'
 import TeamResource from "../resources/teamresource.js";
-import * as stripe from '../services/stripe.js'
+import * as stripe from '../services/stripe.js '
+
+import { generateThumbnail, ensureDirExists } from '../utils/generateThumbnail.js';
+import fs from 'fs';
 
 const User = db.User;
 const Op = db.Sequelize.Op;
@@ -78,6 +81,66 @@ export const LoginUser = async (req, res) => {
     }
 }
 
+
+export const UpdateProfile = async(req, res)=>{
+    JWT.verify(req.token, process.env.SecretJwtKey, async(error, authData) => {
+        if(error){
+            res.send({ status: false, message: "Unauthenticated user", data: null })
+        }
+        else{
+            let userId = authData.user.id
+            let user = await db.User.findByPk(userId)
+            if(!user){
+                return res.json({ status: false, message: "No such user", data: null })
+            }
+
+            let name = req.body.name;
+            user.name = name;
+
+
+            if (req.files.media) {
+                let file = req.files.media[0];
+      
+                const mediaBuffer = file.buffer;
+                const mediaType = file.mimetype;
+                const mediaExt = path.extname(file.originalname);
+                const mediaFilename = `${Date.now()}${mediaExt}`;
+                console.log("There is a file uploaded")
+                if (mediaType.includes('image')) {
+                    let image = null, thumbnail = null
+                  // Ensure directories exist
+                  let dir = process.env.DocsDir///var/www/neo/neoapis/uploads
+                  const imageDir = path.join(dir + '/images');;//path.join(__dirname, '../../uploads/images');
+                  const thumbnailDir = path.join(dir + '/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
+                  ensureDirExists(imageDir);
+                  ensureDirExists(thumbnailDir);
+      
+                  // Save image
+                  const imagePath = path.join(imageDir, mediaFilename);
+                  fs.writeFileSync(imagePath, mediaBuffer);
+                  // image = `/uploads/images/${mediaFilename}`;
+                  image = `https://www.blindcircle.com:444/neo/uploads/images/${mediaFilename}`;
+                  // Generate and save thumbnail
+                  const thumbnailBuffer = await generateThumbnail(mediaBuffer);
+                  const thumbnailFilename = `${Date.now()}_thumb${mediaExt}`;
+                  const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
+                  fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+                  // thumbnail = `/uploads/thumbnails/${thumbnailFilename}`;
+                  thumbnail = `https://www.blindcircle.com:444/neo/uploads/thumbnails/${thumbnailFilename}`;
+                    
+                  user.profile_image = thumbnail;
+                  user.full_profile_image = image;
+                } 
+              }
+
+              let saved = user.save();
+              if(saved){
+                let resource = await UserProfileFullResource(user)
+                return res.json({status: true, message: "Profile updated", data: resource})
+              }
+        }
+    })
+}
 
 export const acceptRejectInvitation = async(req, res) => {
     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {

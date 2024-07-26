@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 
 export const generateThumbnail = async (buffer) => {
   return await sharp(buffer)
-    .resize(200, 200) // Adjust size as needed
+    .resize(400, 400) // Adjust size as needed
     .toBuffer();
 };
 

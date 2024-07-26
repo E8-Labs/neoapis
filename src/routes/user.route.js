@@ -1,10 +1,16 @@
 import express from 'express'
-import { LoginUser, InviteUser, getInvitedUsers, acceptRejectInvitation } from '../controllers/user.controller.js'
+import { LoginUser, InviteUser, getInvitedUsers, acceptRejectInvitation, UpdateProfile } from '../controllers/user.controller.js'
 import verifyJwtToken from '../middleware/jwtmiddleware.js';
 
 import { AddCard, GetUserPaymentSources, subscribeUser, DownloadInvoice } from '../controllers/paymentController.js';
 
 import { SubscriptionUpdated } from '../services/stripe.js';
+
+import multer from 'multer';
+
+const uploadFiles = multer().fields([
+    { name: 'media', maxCount: 1 }
+  ]);
 
 
 
@@ -15,7 +21,7 @@ UserRouter.post("/login", LoginUser);
 UserRouter.post("/invite_user", verifyJwtToken, InviteUser);
 UserRouter.get("/my_team", verifyJwtToken, getInvitedUsers);
 UserRouter.post("/handle_invitation", verifyJwtToken, acceptRejectInvitation);
-
+UserRouter.post("/update_profile", verifyJwtToken, uploadFiles, UpdateProfile);
 
 
 UserRouter.post("/add_card", verifyJwtToken, AddCard);
