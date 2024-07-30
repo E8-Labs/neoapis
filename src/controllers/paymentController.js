@@ -120,7 +120,8 @@ export const subscribeUser = async (req, res) => {
                             data: JSON.stringify(sub.data)
                         });
                         let plan = await UserSubscriptionResource(sub.data)
-                        res.send({ status: true, message: "Subscription", data: plan })
+                        let userRes = await UserProfileFullResource(user)
+                        res.send({ status: true, message: "Subscription", data: userRes })
                     }
                     else {
                         res.send({ status: false, message: sub.message, data: sub.data })
