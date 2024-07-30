@@ -138,7 +138,30 @@ export const subscribeUser = async (req, res) => {
     })
 }
 
+export const GetTransactions = async (req, res) => {
+    JWT.verify(req.token, process.env.SecretJwtKey, async(error, authData) => {
+        if(error){
+            res.send({ status: false, message: "Unauthenticated user", data: null })
+        }
+        else{
+            let user = await db.User.findByPk(authData.user.id)
+            let customerId = user.customerId || null
+            if(customerId){
 
+                let transactions = await db.TransactionModel.findAll({
+                    where: {
+                        customerId: customerId
+                    }
+                })
+                return res.json({status: true, message: "Transactions obtained", data: transactions})
+            }
+            else{
+                res.send({ status: true, message: "User don't have transactions", data: null })
+            }
+            
+        }
+    })
+}
 
 export const DownloadInvoice = async(req, res) => {
     let invoiceId = req.body.invoiceId

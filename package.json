@@ -10,6 +10,7 @@
   "author": "salman majid ali",
   "license": "ISC",
   "dependencies": {
+    "@pinecone-database/pinecone": "^3.0.0",
     "aws-sdk": "^2.1659.0",
     "axios": "^1.7.2",
     "base-64": "^1.0.0",
@@ -29,6 +30,7 @@
     "openai": "^4.52.7",
     "path": "^0.12.7",
     "pdfkit": "^0.15.0",
+    "pinecone-client": "^2.0.0",
     "sequelize": "^6.37.3",
     "sharp": "^0.33.4",
     "sqlite3": "^5.1.7",

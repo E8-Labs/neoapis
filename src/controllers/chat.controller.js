@@ -7,15 +7,58 @@ import fs from 'fs';
 import path from 'path';
 import { generateThumbnail, ensureDirExists } from '../utils/generateThumbnail.js';
 
-
+const getRandomMessage = async () => {
+  try {
+    const randomMessage = await db.Message.findOne({
+      where:{
+        senderType: 'gpt'
+      },
+      order: db.sequelize.random(),
+    });
+    return randomMessage;
+  } catch (error) {
+    console.error('Error fetching random message:', error);
+    throw error;
+  }
+};
 
 
 const sendMessage = async (req, res) => {
   console.log("Send message API called");
   JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
     if (authData) {
+
+
+      const { content, chatId } = req.body;
+      // let m1 = {
+      //   content,
+      //   senderType: 'user',
+      //   chatId,
+      //   userId: authData.user.id,
+      //   image: null,
+      //   imageThumb:  null,
+      //   docUrl: null,
+      //   tokens: 'promptTokens'
+      // }
+
+      // let mFromDb = await getRandomMessage();
+
+      // let m2 = {
+      //   content: "Hello this is response from gpt",
+      //   senderType: 'gpt',
+      //   chatId,
+      //   image: null,
+      //   imageThumb: null,
+      //   docUrl: null,
+      //   tokens: "completionTokens",
+      //   finishReason: "gptResponse.finish_reason"
+      // }
+
+
+      // return res.status(200).json({ data: [m1, mFromDb], status: true, message: "message processed" });
+
       try {
-        const { content, chatId } = req.body;
+        
         console.log(req.files)
 
         let image = null, thumbnail = null, doc = null;
@@ -74,7 +117,7 @@ const sendMessage = async (req, res) => {
           });
         }
 
-        const response = await sendMessageToGPT(content, previousMessages, image);
+        const response = await sendMessageToGPT(content, previousMessages, image, chatId, chatId + `${Date().now}`);
         const gptResponse = response.choices[0];
         let promptTokens = response.usage.prompt_tokens;
         let completionTokens = response.usage.completion_tokens;
