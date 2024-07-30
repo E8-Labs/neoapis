@@ -153,7 +153,7 @@ export const GetTransactions = async (req, res) => {
                         customerId: customerId
                     }
                 })
-                return res.json({status: true, message: "Transactions obtained", data: transactions})
+                return res.send({status: true, message: "Transactions obtained", data: transactions})
             }
             else{
                 res.send({ status: true, message: "User don't have transactions", data: null })

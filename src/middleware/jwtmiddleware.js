@@ -3,6 +3,7 @@ import JWT from "jsonwebtoken";
 
 export const verifyJwtToken = (req, response, next)=>{
     const authHeaders = req.headers['authorization'];
+    console.log("Auth headers")
     console.log(authHeaders);
     if(typeof authHeaders !== 'undefined'){
         const parts = authHeaders.split(" ");
