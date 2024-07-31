@@ -85,8 +85,8 @@ export const subscribeUser = async (req, res) => {
             if (subs) {//(subs && subs.data.length !== 0) {
                 //console.log("User is already subscribed", subs)
                 let s = await UserSubscriptionResource(JSON.parse(subs[0].data))
-
-                res.send({ status: false, message: "Already subscribed", data: s })
+                let userRes = await UserProfileFullResource(user)
+                res.send({ status: false, message: "Already subscribed", data: userRes })
             }
             else {
                 let cards = await stripe.loadCards(user);
@@ -124,7 +124,8 @@ export const subscribeUser = async (req, res) => {
                         res.send({ status: true, message: "Subscription", data: userRes })
                     }
                     else {
-                        res.send({ status: false, message: sub.message, data: sub.data })
+                        let userRes = await UserProfileFullResource(user)
+                        res.send({ status: false, message: sub.message, data: userRes })
                     }
 
                 }
