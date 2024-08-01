@@ -37,6 +37,13 @@ async function getUserData(user, currentUser = null) {
                 plan = parseSubscription(JSON.parse(subs[0].data))
             }
 
+
+            let totalMessages = await db.Message.count({
+                where: {
+                    UserId: user.id
+                }
+            })
+
     const UserFullResource = {
         id: user.id,
         name: user.name,
@@ -44,7 +51,8 @@ async function getUserData(user, currentUser = null) {
         full_profile_image: user.full_profile_image,
         email: user.email,
         phone: user.phone,
-        plan: plan
+        plan: plan,
+        messages: totalMessages
     }
 
 
