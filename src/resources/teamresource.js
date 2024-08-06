@@ -25,6 +25,9 @@ async function getUserData(p, currentUser = null) {
 
     let fromUser = await db.User.findOne({where:{id: p.fromUser}})
     let toUser = await db.User.findOne({where: {email: p.toUserEmail}})
+    if(p.toUser){
+        toUser = await db.User.findOne({where: {id: p.toUser}})
+    }
 
     const UserFullResource = {
         id: p.id,
