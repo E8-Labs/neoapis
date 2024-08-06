@@ -52,9 +52,9 @@ export const LoginUser = async (req, res) => {
             email: email,
             password: hashed,
         })
-        if(inviteId){
+        if (inviteId) {
             let invite = await db.Invitation.findByPk(inviteId)
-            if(invite){
+            if (invite) {
                 invite.toUser = user.id;
                 invite.status = "accepted";
                 let saved = invite.save();
@@ -84,27 +84,27 @@ export const LoginUser = async (req, res) => {
 
 export const GetProfile = async (req, res) => {
     console.log("Gettign profile")
-    JWT.verify(req.token, process.env.SecretJwtKey, async(error, authData) => {
-        if(error){
+    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+        if (error) {
             res.send({ status: false, message: "Unauthenticated user", data: null })
         }
-        else{
+        else {
             let user = await db.User.findByPk(authData.user.id)
             let resource = await UserProfileFullResource(user)
-             res.send({status: true, message: "Profile obtained", data: resource})
+            res.send({ status: true, message: "Profile obtained", data: resource })
         }
     })
 }
 
-export const UpdateProfile = async(req, res)=>{
-    JWT.verify(req.token, process.env.SecretJwtKey, async(error, authData) => {
-        if(error){
+export const UpdateProfile = async (req, res) => {
+    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+        if (error) {
             res.send({ status: false, message: "Unauthenticated user", data: null })
         }
-        else{
+        else {
             let userId = authData.user.id
             let user = await db.User.findByPk(userId)
-            if(!user){
+            if (!user) {
                 return res.json({ status: false, message: "No such user", data: null })
             }
 
@@ -114,7 +114,7 @@ export const UpdateProfile = async(req, res)=>{
 
             if (req.files.media) {
                 let file = req.files.media[0];
-      
+
                 const mediaBuffer = file.buffer;
                 const mediaType = file.mimetype;
                 const mediaExt = path.extname(file.originalname);
@@ -122,72 +122,72 @@ export const UpdateProfile = async(req, res)=>{
                 console.log("There is a file uploaded")
                 if (mediaType.includes('image')) {
                     let image = null, thumbnail = null
-                  // Ensure directories exist
-                  let dir = process.env.DocsDir///var/www/neo/neoapis/uploads
-                  const imageDir = path.join(dir + '/images');;//path.join(__dirname, '../../uploads/images');
-                  const thumbnailDir = path.join(dir + '/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
-                  ensureDirExists(imageDir);
-                  ensureDirExists(thumbnailDir);
-      
-                  // Save image
-                  const imagePath = path.join(imageDir, mediaFilename);
-                  fs.writeFileSync(imagePath, mediaBuffer);
-                  // image = `/uploads/images/${mediaFilename}`;
-                  image = `https://www.blindcircle.com:444/neo/uploads/images/${mediaFilename}`;
-                  // Generate and save thumbnail
-                  const thumbnailBuffer = await generateThumbnail(mediaBuffer);
-                  const thumbnailFilename = `${Date.now()}_thumb${mediaExt}`;
-                  const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
-                  fs.writeFileSync(thumbnailPath, thumbnailBuffer);
-                  // thumbnail = `/uploads/thumbnails/${thumbnailFilename}`;
-                  thumbnail = `https://www.blindcircle.com:444/neo/uploads/thumbnails/${thumbnailFilename}`;
-                    
-                  user.profile_image = thumbnail;
-                  user.full_profile_image = image;
-                } 
-              }
+                    // Ensure directories exist
+                    let dir = process.env.DocsDir///var/www/neo/neoapis/uploads
+                    const imageDir = path.join(dir + '/images');;//path.join(__dirname, '../../uploads/images');
+                    const thumbnailDir = path.join(dir + '/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
+                    ensureDirExists(imageDir);
+                    ensureDirExists(thumbnailDir);
 
-              let saved = user.save();
-              if(saved){
+                    // Save image
+                    const imagePath = path.join(imageDir, mediaFilename);
+                    fs.writeFileSync(imagePath, mediaBuffer);
+                    // image = `/uploads/images/${mediaFilename}`;
+                    image = `https://www.blindcircle.com:444/neo/uploads/images/${mediaFilename}`;
+                    // Generate and save thumbnail
+                    const thumbnailBuffer = await generateThumbnail(mediaBuffer);
+                    const thumbnailFilename = `${Date.now()}_thumb${mediaExt}`;
+                    const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
+                    fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+                    // thumbnail = `/uploads/thumbnails/${thumbnailFilename}`;
+                    thumbnail = `https://www.blindcircle.com:444/neo/uploads/thumbnails/${thumbnailFilename}`;
+
+                    user.profile_image = thumbnail;
+                    user.full_profile_image = image;
+                }
+            }
+
+            let saved = user.save();
+            if (saved) {
                 let resource = await UserProfileFullResource(user)
-                return res.json({status: true, message: "Profile updated", data: resource})
-              }
+                return res.json({ status: true, message: "Profile updated", data: resource })
+            }
         }
     })
 }
 
-export const acceptRejectInvitation = async(req, res) => {
+export const acceptRejectInvitation = async (req, res) => {
     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
         if (authData) {
             let userId = authData.user.id
             let user = await db.User.findByPk(userId)
-            if(user){
+            if (user) {
                 let status = req.body.status; //accepted, rejected
                 let inviteId = req.body.inviteId;
                 let invite = await db.Invitation.findByPk(inviteId);
-                if(invite){
-                    if(invite.toUserEmail == user.email || invite.toUser == user.id){
+                if (invite) {
+                    if (invite.toUserEmail == user.email || invite.toUser == user.id) {
                         invite.status = status
                     }
                     await invite.save();
                     res.send({ status: true, message: "Invitation accepted", data: null })
                 }
-                else{
+                else {
                     res.send({ status: false, message: "Invitation doesn't exist", data: null })
                 }
 
             }
-            else{
+            else {
                 res.send({ status: false, message: "No such user", data: null })
             }
         }
-        else{
+        else {
             res.send({ status: false, message: "Unauthenticated user", data: null })
         }
     })
 }
 
-export const getInvitedUsers = async(req, res)=> {
+export const getInvitedUsers = async (req, res) => {
     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
         if (authData) {
             let userId = authData.user.id;
@@ -195,16 +195,16 @@ export const getInvitedUsers = async(req, res)=> {
             let teamMembers = await db.Invitation.findAll({
                 where: {
                     [Op.or]: [
-                        {fromUser: userId},
-                        {toUser: userId},
-                        {toUserEmail: user.email}
+                        { fromUser: userId },
+                        { toUser: userId },
+                        { toUserEmail: user.email }
                     ]
                 }
             })
             let resource = await TeamResource(teamMembers)
             res.send({ status: true, message: "Team list", data: resource })
         }
-        else{
+        else {
             res.send({ status: false, message: "Unauthenticated user", data: null })
         }
     })
@@ -224,13 +224,13 @@ export const InviteUser = async (req, res) => {
                 console.log("Name is ", req.body.name)
                 console.log("Role is ", req.body.role)
 
-                if(toUserEmail){
+                if (toUserEmail) {
                     let invitedUser = await db.User.findOne({
                         where: {
                             email: toUserEmail
                         }
                     })
-                    if(invitedUser){
+                    if (invitedUser) {
                         toUserId = invitedUser.id
                     }
                 }
@@ -239,23 +239,25 @@ export const InviteUser = async (req, res) => {
                     let inv = await db.Invitation.create({
                         fromUser: userId,
                         toUser: toUserId,
-                        status: 'pending', 
+                        status: 'pending',
                         name: name,
                         role: role
                     })
-                    res.send({ status: true, message: "Invitation sent", data: inv })
+                    let resource = await TeamResource(inv)
+                    res.send({ status: true, message: "Invitation sent", data: resource })
                 }
                 else {
                     // send email invitation
                     let inv = await db.Invitation.create({
                         fromUser: userId,
                         toUserEmail: toUserEmail,
-                        status: 'pending', 
+                        status: 'pending',
                         name: name,
                         role: role
                     })
+                    let resource = await TeamResource(inv)
                     let sent = await sendEmail(inv.id, user.name ? user.name : user.email, toUserEmail)
-                    res.send({ status: true, message: "Invitation sent to mail", data: inv })
+                    res.send({ status: true, message: "Invitation sent to mail", data: resource })
                 }
 
             }
@@ -282,7 +284,7 @@ async function sendEmail(inviteId, fromUserName, toEmail) {
             pass: "uzmvwsljflyqnzgu", // Your email password
         },
     });
-    
+
     try {
         let mailOptions = {
             from: '"Neo Ai" salman@e8-labs.com', // Sender address
@@ -374,7 +376,7 @@ async function sendEmail(inviteId, fromUserName, toEmail) {
 </body>
 </html>
 `
-            , 
+            ,
         };
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
@@ -387,7 +389,7 @@ async function sendEmail(inviteId, fromUserName, toEmail) {
         });
     }
     catch (error) {
-        return {status: false, message: "An error occurred", error: error}
+        return { status: false, message: "An error occurred", error: error }
         //console.log("Exception email", error)
     }
 
