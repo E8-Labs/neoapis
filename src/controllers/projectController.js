@@ -173,34 +173,34 @@ You can access the example code structure in your knowledge base Step 10 Code St
 
 
                 //Send Message
-                // const response = await sendMessageToGPT(prompt, [], null);
-                // const gptResponse = response.choices[0];
-                // let promptTokens = response.usage.prompt_tokens;
-                // let completionTokens = response.usage.completion_tokens;
+                const response = await sendMessageToGPT(prompt, [], null);
+                const gptResponse = response.choices[0];
+                let promptTokens = response.usage.prompt_tokens;
+                let completionTokens = response.usage.completion_tokens;
 
 
-                // const message = await db.Message.create({
-                //     content: prompt,
-                //     senderType: 'user',
-                //     chatId: chat.id,
-                //     userId: authData.user.id,
-                //     image: null,
-                //     imageThumb: null,
-                //     docUrl: null,
-                //     tokens: promptTokens,
-                //     visibility: "hidden"
-                // });
+                const message = await db.Message.create({
+                    content: prompt,
+                    senderType: 'user',
+                    chatId: chat.id,
+                    userId: authData.user.id,
+                    image: null,
+                    imageThumb: null,
+                    docUrl: null,
+                    tokens: promptTokens,
+                    visibility: "hidden"
+                });
 
-                // const gptMessage = await db.Message.create({
-                //     content: gptResponse.message.content,
-                //     senderType: 'gpt',
-                //     chatId: chat.id,
-                //     image: null,
-                //     imageThumb: null,
-                //     docUrl: null,
-                //     tokens: completionTokens,
-                //     finishReason: gptResponse.finish_reason
-                // });
+                const gptMessage = await db.Message.create({
+                    content: gptResponse.message.content,
+                    senderType: 'gpt',
+                    chatId: chat.id,
+                    image: null,
+                    imageThumb: null,
+                    docUrl: null,
+                    tokens: completionTokens,
+                    finishReason: gptResponse.finish_reason
+                });
 
 
 
