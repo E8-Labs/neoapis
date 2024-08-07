@@ -164,7 +164,9 @@ Here are some of the details on the project
                 App Idea: ${appIdea}
                 Audience: ${targettedAudience}
                 App Name: ${projectName}
-                
+##Important rules
+1. Your output should be one step at a time. Don't contiunue on to the next step until the user has confirmed or given feedback on each step. 
+               
 
 `
 
