@@ -50,23 +50,24 @@ const sendMessageToGPT = async (message, previousMessages, media = null, chatId 
     }
     console.log("Context is ", history)
     // return 
-    let messages = [{role: "system", content: history, type: "history"}, { role: "user", content: message }]
-    // if (media) {
-    //   messages = [...previousMessages,
-    //   {
-    //     role: "user",
-    //     content: [
-    //       { type: "text", text: message },
-    //       {
-    //         type: "image_url",
-    //         image_url: {
-    //           url: media,
-    //         }
+    // let messages = [{role: "system", content: history, type: "history"}, { role: "user", content: message }]
+    let messages = [...previousMessages, { role: "user", content: message }]
+    if (media) {
+      messages = [...previousMessages,
+      {
+        role: "user",
+        content: [
+          { type: "text", text: message },
+          {
+            type: "image_url",
+            image_url: {
+              url: media,
+            }
 
-    //       },
-    //     ],
-    //   },]
-    // }
+          },
+        ],
+      },]
+    }
     console.log("Messages sent to gpt ", messages)
     const completion = await openai.chat.completions.create({
       messages: messages,//[...previousMessages, {role: "user", content: message}],

@@ -33,8 +33,9 @@ app.use((req, res, next) => {
     console.log(`${req.method} request for '${req.url}'`);
     next();
   });
+
   
-  // 'https://neo-ai-nu.vercel.app',// my project
+  'https://neo-ai-nu.vercel.app',// my project
   app.use(cors({
     origin: 'https://neoai-ebon.vercel.app',
     methods: ['GET', 'POST'],
