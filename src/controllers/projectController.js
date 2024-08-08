@@ -60,6 +60,7 @@ Example Format:
 Persona A: [Detailed description]
 Persona B: [Detailed description]
 Admin: [Detailed description]
+The format should be like a table view. 
 (STOP, WAIT FOR RESPONSE)
 
 Step: Define Use Cases (Explain what a use case is, then list out all common use cases for ea persona) 
@@ -84,6 +85,8 @@ Accept Ride Requests: To earn money by providing rides
 Track Earnings: To manage and review financial performance
 Navigation Integration	:To find and follow the best routes to destinations
 Ride History: To review past rides for any discrepancies or records
+The format should be like a table view. 
+
 (STOP, WAIT FOR RESPONSE)
 
 Step: UI/UX Design
@@ -139,6 +142,7 @@ Button: "Next”
 
 Step: User Flow
 After, defining the onboarding. Create a user flowchart from the initial onboarding to the core screens on the short tab bar menu to engaging with core features. Build a flow chart visualizing all the possible flows across the core screens and features. 
+The output of this step can be in a block like format using rectangles and triangles to illustrate the flow.
 
 Step: Build Out the App in React Native (make sure to comment what ea line of code is doing. Remember, we're building this for none technical founders) 
 Using all resources available at React Native (https://reactnative.dev/), and prioritizing the following UI component libraries:
@@ -171,7 +175,7 @@ You can access the example code structure in your knowledge base Step 10 Code St
 
 ##Important rules
 1. Your output should be one step at a time. Don't contiunue on to the next step until the user has confirmed or given feedback on each step. 
-               
+2. While generating code put the file type in comments like //jsx, //js, //javascript or //tsx. Don't show them just as it is.               
 
 `
 
