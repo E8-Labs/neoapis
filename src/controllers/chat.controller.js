@@ -59,7 +59,7 @@ const sendMessage = async (req, res) => {
 
       try {
         
-        console.log(req.files)
+        console.log("Files", req.files)
 
         let image = null, thumbnail = null, doc = null;
         if (req.files.media) {
@@ -71,7 +71,7 @@ const sendMessage = async (req, res) => {
           const mediaFilename = `${Date.now()}${mediaExt}`;
           console.log("There is a file uploaded")
           if (mediaType.includes('image')) {
-
+            console.log("There is an attached image in the request")
             // Ensure directories exist
             let dir = process.env.DocsDir///var/www/neo/neoapis/uploads
             const imageDir = path.join(dir + '/images');;//path.join(__dirname, '../../uploads/images');
