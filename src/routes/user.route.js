@@ -1,5 +1,6 @@
 import express from 'express'
-import { LoginUser, InviteUser, getInvitedUsers, acceptRejectInvitation, UpdateProfile, GetProfile } from '../controllers/user.controller.js'
+import { LoginUser, InviteUser, getInvitedUsers, acceptRejectInvitation, 
+  UpdateProfile, GetProfile, SendFeedback } from '../controllers/user.controller.js'
 import verifyJwtToken from '../middleware/jwtmiddleware.js';
 
 import { AddCard, GetUserPaymentSources, subscribeUser, DownloadInvoice, GetTransactions } from '../controllers/paymentController.js';
@@ -19,6 +20,7 @@ let UserRouter = express.Router()
 
 UserRouter.post("/login", LoginUser);
 UserRouter.post("/invite_user", verifyJwtToken, InviteUser);
+UserRouter.post("/send_feedback", verifyJwtToken, uploadFiles, SendFeedback);
 UserRouter.get("/my_team", verifyJwtToken, getInvitedUsers);
 UserRouter.post("/handle_invitation", verifyJwtToken, acceptRejectInvitation);
 UserRouter.post("/update_profile", verifyJwtToken, uploadFiles, UpdateProfile);

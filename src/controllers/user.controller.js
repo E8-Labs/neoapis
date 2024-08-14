@@ -394,3 +394,180 @@ async function sendEmail(inviteId, fromUserName, toEmail) {
     }
 
 }
+
+export const SendFeedback = async (req, res) => {
+    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+        if (authData) {
+            let userId = authData.user.id;
+            let user = await db.User.findByPk(userId);
+
+            let image = null, thumbnail = null;
+        if (req.files.media) {
+          let file = req.files.media[0];
+
+          const mediaBuffer = file.buffer;
+          const mediaType = file.mimetype;
+          const mediaExt = path.extname(file.originalname);
+          const mediaFilename = `${Date.now()}${mediaExt}`;
+          console.log("There is a file uploaded")
+          if (mediaType.includes('image')) {
+            console.log("There is an attached image in the request")
+            // Ensure directories exist
+            let dir = process.env.DocsDir///var/www/neo/neoapis/uploads
+            const imageDir = path.join(dir + '/images');;//path.join(__dirname, '../../uploads/images');
+            const thumbnailDir = path.join(dir + '/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
+            ensureDirExists(imageDir);
+            ensureDirExists(thumbnailDir);
+
+            // Save image
+            const imagePath = path.join(imageDir, mediaFilename);
+            fs.writeFileSync(imagePath, mediaBuffer);
+            // image = `/uploads/images/${mediaFilename}`;
+            image = `https://www.blindcircle.com:444/neo/uploads/images/${mediaFilename}`;
+            // Generate and save thumbnail
+            // const thumbnailBuffer = await generateThumbnail(mediaBuffer);
+            // const thumbnailFilename = `${Date.now()}_thumb${mediaExt}`;
+            // const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
+            // fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+            // thumbnail = `/uploads/thumbnails/${thumbnailFilename}`;
+            // thumbnail = `https://www.blindcircle.com:444/neo/uploads/thumbnails/${thumbnailFilename}`;
+
+          }
+        }
+
+
+
+            let sent = await sendFeedbackEmail(user.name, "salman@e8-labs.com", user.name, req.body.userType, req.body.description, image);
+            res.send({ status: true, message: "Feedback sent to mail", data: null })
+        }
+    })
+}
+async function sendFeedbackEmail(fromUserName, toEmail, userName, userType, description, imageUrl) {
+    let transporter = nodemailer.createTransport({
+        host: "smtp.gmail.com", // Replace with your mail server host
+        port: 587, // Port number depends on your email provider and whether you're using SSL or not
+        secure: false, // true for 465 (SSL), false for other ports
+        auth: {
+            user: "salman@e8-labs.com", // Your email address
+            pass: "uzmvwsljflyqnzgu", // Your email password
+        },
+    });
+
+    try {
+        let mailOptions = {
+            from: '"Neo Ai" <salman@e8-labs.com>', // Sender address
+            to: toEmail, // List of recipients
+            subject: "Feedback Received", // Subject line
+            html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Received</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #6050DC;
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333333;
+        }
+        .content .user-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        .content .user-details h2 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            color: #6050DC;
+        }
+        .content .user-details p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #555555;
+        }
+        .content .user-details img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+            color: #777777;
+        }
+        .footer a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Feedback from ${userName}</h1>
+        </div>
+        <div class="content">
+            <p><strong>Hello ${fromUserName},</strong></p>
+            <p>We have received the following feedback from ${userName} (${userType}):</p>
+            <div class="user-details">
+                <h2>${userName}</h2>
+                <p><strong>Type of User:</strong> ${userType}</p>
+                <p><strong>Description:</strong> ${description}</p>
+                <p><strong>Image:</strong></p>
+                <img src="${imageUrl}" alt="User Image">
+            </div>
+            <p>We appreciate the time taken to provide this feedback. Please reach out if you have any further questions or need assistance.</p>
+        </div>
+        <div class="footer">
+            <p>If you have any questions, please <a href="mailto:salman@e8-labs.com">contact us</a>.</p>
+        </div>
+    </div>
+</body>
+</html>
+`
+        };
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                return { status: false, message: "Email not sent", error: error }
+            } else {
+                return { status: true, message: "Email sent successfully" }
+            }
+        });
+    } catch (error) {
+        return { status: false, message: "An error occurred", error: error }
+    }
+}
