@@ -171,9 +171,10 @@ const getMessages = async (req, res) => {
           chatId: chatId,
           visibility: "visible"
         },
-        order: [['createdAt', 'ASC']],
+        order: [['createdAt', 'DESC']],
         limit: 40,
       });
+      messages = messages.reverse();
 
       return res.json({ status: true, message: "messages list", data: messages });
     }
