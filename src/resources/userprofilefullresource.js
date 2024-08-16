@@ -52,7 +52,8 @@ async function getUserData(user, currentUser = null) {
         email: user.email,
         phone: user.phone,
         plan: plan,
-        messages: totalMessages
+        messages: totalMessages,
+        myShareCode: user.myShareCode
     }
 
 

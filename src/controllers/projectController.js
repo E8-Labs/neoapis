@@ -10,6 +10,7 @@ import { generateThumbnail, ensureDirExists } from '../utils/generateThumbnail.j
 import { fileURLToPath } from 'url';
 
 import { sendMessage } from './chat.controller.js';
+import TeamResource from '../resources/teamresource.js';
 // const Project = db.Project;
 // const Chat = db.Chat;
 
@@ -391,7 +392,9 @@ export const assignProject = async (req, res) => {
     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
       if (authData) {
         let projectId = req.body.projectId;
-        let userId = req.body.userId;
+        let userId = req.body.userId || 'none';
+        let userEmail = req.body.userEmail || 'none';
+        
         console.log("User id ", authData.user.id)
   
         try {
@@ -400,7 +403,8 @@ export const assignProject = async (req, res) => {
             where: {
               [db.Sequelize.Op.or]: [
                 { toUser: userId },
-                { fromUser: userId }
+                { fromUser: userId },
+                {toUserEmail: userEmail}
               ],
               status: 'accepted',
             },
@@ -410,8 +414,9 @@ export const assignProject = async (req, res) => {
             // The user is a team member, proceed with project assignment
             await db.InvitedProject.create({
               projectId: projectId,
-              InvitedUserId: userId, // Assuming this is the correct foreign key name
-              InvitingUserId: authData.user.id
+              InvitedUserId: userId != 'none' ? userId: null, // Assuming this is the correct foreign key name
+              InvitingUserId: authData.user.id,
+              InvitedUserEmail: userEmail != 'none' ? userEmail : null
             });
   
             res.status(200).json({ status: true, message: "Project assigned successfully" });
@@ -431,6 +436,34 @@ export const assignProject = async (req, res) => {
   
   
   
-
+export const GetInvitation = async(req, res)=> {
+  // JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+  //   if (authData) {
+      let inviteId = req.body.inviteId;
+      let invite = await db.Invitation.findByPk(inviteId)
+      if(invite){
+        let teamRes = await TeamResource(invite)
+        let projectInvited = await db.InvitedProject.findOne({
+          where: {
+            InvitedUserEmail: invite.toUserEmail
+          }
+        })
+        let project = await db.Project.findOne({
+          where: {
+            id: projectInvited.projectId
+          }
+        })
+        let projectRes = await ProjectResource(project)
+        res.send({ status: true, message: "Invite data", data: {invite: teamRes, project: projectRes} });
+      }
+      else{
+        res.send({ status: false, message: "No such invitation", reason: "no_such_invitation" });
+      }
+    }
+    // else{
+    //   res.status(401).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
+    // }
+  // })
+// }
 
 export { createProject, getUserProjects }

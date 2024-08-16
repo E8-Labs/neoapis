@@ -30,6 +30,14 @@ const User = (sequelize, Sequelize) => {
         defaultValue: ''
         
       },
+      myShareCode: {
+        type: Sequelize.STRING, // code of the user who refferred him
+        defaultValue: ''
+      },
+      usedShareCode: {
+        type: Sequelize.STRING, // code of the user who refferred him
+        defaultValue: ''
+      }
     });
   
     return User;

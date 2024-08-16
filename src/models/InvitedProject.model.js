@@ -15,11 +15,17 @@ const InvitedProject = (sequelize, Sequelize) => {
       // Foreign key to the User model (InvitedUser)
       InvitedUserId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
           model: 'Users', // Table name (plural form)
           key: 'id'
         }
+      },
+
+      InvitedUserEmail: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        
       },
   
       // Foreign key to the User model (InvitingUser)
