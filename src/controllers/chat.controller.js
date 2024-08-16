@@ -171,7 +171,7 @@ const getMessages = async (req, res) => {
           chatId: chatId,
           visibility: "visible"
         },
-        order: [['createdAt', 'DESC']],
+        order: [['createdAt', 'ASC']],
         limit: 40,
       });
 
