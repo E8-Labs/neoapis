@@ -229,9 +229,6 @@ You can access the example code structure in your knowledge base Step 10 Code St
 };
 
 
-
-
-
 export const UpdateProject = async (req, res) => {
     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
         if (authData) {
@@ -302,47 +299,138 @@ export const UpdateProject = async (req, res) => {
     })
 
 };
+// const getUserProjects = async (req, res) => {
+//     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+//         if (authData) {
+//             try {
+//                 // Fetch projects created by the authenticated user
+//                 let userProjects = await db.Project.findAll({
+//                     where: {
+//                         userId: authData.user.id
+//                     }
+//                 });
+
+//                 // Fetch accepted invitations where the authenticated user is the invitee
+//                 let acceptedInvitations = await db.Invitation.findAll({
+//                     where: {
+//                         toUser: authData.user.id,
+//                         status: 'accepted'
+//                     }
+//                 });
+
+//                 // Extract the IDs of the users who invited the authenticated user
+//                 let invitingUserIds = acceptedInvitations.map(invite => invite.fromUser);
+
+//                 // Fetch projects of the users who invited the authenticated user
+//                 let invitedProjects = await db.Project.findAll({
+//                     where: {
+//                         userId: invitingUserIds
+//                     }
+//                 });
+
+//                 // Combine both sets of projects
+//                 let allProjects = [...userProjects, ...invitedProjects];
+
+//                 res.status(200).json({ status: true, message: "Projects retrieved successfully", data: await ProjectResource(allProjects) });
+//             } catch (error) {
+//                 console.log("Error fetching projects: ", error);
+//                 res.status(500).json({ error: 'Server Error', status: false, message: error.message });
+//             }
+//         } else {
+//             res.status(401).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
+//         }
+//     });
+// };
+
+
 const getUserProjects = async (req, res) => {
-    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
-        if (authData) {
-            try {
-                // Fetch projects created by the authenticated user
-                let userProjects = await db.Project.findAll({
-                    where: {
-                        userId: authData.user.id
-                    }
-                });
+  JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+    if (authData) {
+      try {
+        // Fetch projects created by the authenticated user
+        let userProjects = await db.Project.findAll({
+          where: {
+            userId: authData.user.id
+          }
+        });
 
-                // Fetch accepted invitations where the authenticated user is the invitee
-                let acceptedInvitations = await db.Invitation.findAll({
-                    where: {
-                        toUser: authData.user.id,
-                        status: 'accepted'
-                    }
-                });
-
-                // Extract the IDs of the users who invited the authenticated user
-                let invitingUserIds = acceptedInvitations.map(invite => invite.fromUser);
-
-                // Fetch projects of the users who invited the authenticated user
-                let invitedProjects = await db.Project.findAll({
-                    where: {
-                        userId: invitingUserIds
-                    }
-                });
-
-                // Combine both sets of projects
-                let allProjects = [...userProjects, ...invitedProjects];
-
-                res.status(200).json({ status: true, message: "Projects retrieved successfully", data: await ProjectResource(allProjects) });
-            } catch (error) {
-                console.log("Error fetching projects: ", error);
-                res.status(500).json({ error: 'Server Error', status: false, message: error.message });
+        // Fetch projects assigned to the authenticated user via the InvitedProject model
+        let assignedProjects = await db.InvitedProject.findAll({
+          where: {
+            InvitedUserId: authData.user.id
+          },
+          include: [
+            {
+              model: db.Project,
+              as: 'Project',
+            //   attributes: ['id', 'projectName', 'appIdea', 'targettedAudience', 'projectImage', 'projectImageThumb']
             }
-        } else {
-            res.status(401).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
-        }
-    });
+          ]
+        });
+
+        // Extract the project details from the assigned projects
+        let invitedProjects = assignedProjects.map(assigned => assigned.Project);
+
+        // Combine both sets of projects
+        let allProjects = [...userProjects, ...invitedProjects];
+
+        res.status(200).json({ status: true, message: "Projects retrieved successfully", data: await ProjectResource(allProjects) });
+      } catch (error) {
+        console.log("Error fetching projects: ", error);
+        res.status(500).json({ error: 'Server Error', status: false, message: error.message });
+      }
+    } else {
+      res.status(401).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
+    }
+  });
 };
+
+
+
+export const assignProject = async (req, res) => {
+    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+      if (authData) {
+        let projectId = req.body.projectId;
+        let userId = req.body.userId;
+        console.log("User id ", authData.user.id)
+  
+        try {
+          // Check if the user is a team member
+          const teamMember = await db.Invitation.findOne({
+            where: {
+              [db.Sequelize.Op.or]: [
+                { toUser: userId },
+                { fromUser: userId }
+              ],
+              status: 'accepted',
+            },
+          });
+  
+          if (teamMember) {
+            // The user is a team member, proceed with project assignment
+            await db.InvitedProject.create({
+              projectId: projectId,
+              InvitedUserId: userId, // Assuming this is the correct foreign key name
+              InvitingUserId: authData.user.id
+            });
+  
+            res.status(200).json({ status: true, message: "Project assigned successfully" });
+          } else {
+            // The user is not a team member
+            res.status(403).json({ status: false, message: "User is not a team member" });
+          }
+        } catch (err) {
+            console.log(err)
+          res.status(500).json({ status: false, message: "An error occurred", error: err.message });
+        }
+      } else {
+        res.status(500).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
+      }
+    });
+  };
+  
+  
+  
+
 
 export { createProject, getUserProjects }

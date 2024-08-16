@@ -244,6 +244,13 @@ export const InviteUser = async (req, res) => {
                         role: role
                     })
                     let resource = await TeamResource(inv)
+                    if(req.body.projectId){
+                        await db.InvitedProject.create({
+                            projectId: req.body.projectId,
+                            InvitedUserId: toUserId, // Assuming this is the correct foreign key name
+                            InvitingUserId: userId
+                          });
+                    }
                     res.send({ status: true, message: "Invitation sent", data: resource })
                 }
                 else {
@@ -255,6 +262,13 @@ export const InviteUser = async (req, res) => {
                         name: name,
                         role: role
                     })
+                    // if(req.body.projectId){
+                    //     await db.InvitedProject.create({
+                    //         projectId: req.body.projectId,
+                    //         InvitedUserId: toUserId, // Assuming this is the correct foreign key name
+                    //         InvitingUserId: userId
+                    //       });
+                    // }
                     let resource = await TeamResource(inv)
                     let sent = await sendEmail(inv.id, user.name ? user.name : user.email, toUserEmail)
                     res.send({ status: true, message: "Invitation sent to mail", data: resource })
@@ -569,5 +583,25 @@ async function sendFeedbackEmail(fromUserName, toEmail, userName, userType, desc
         });
     } catch (error) {
         return { status: false, message: "An error occurred", error: error }
+    }
+}
+
+
+
+export const CheckEmailExists = async (req, res) => {
+    let phone = req.body.email;
+    // let code = req.body.code;
+
+    let user = await db.User.findOne({
+        where: {
+            email: phone
+        }
+    })
+
+    if (user) {
+        res.send({ status: false, data: null, message: "Email already taken" })
+    }
+    else {
+        res.send({ status: true, data: null, message: "Email available" })
     }
 }

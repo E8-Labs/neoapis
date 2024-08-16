@@ -170,8 +170,10 @@ const getMessages = async (req, res) => {
         where: {
           chatId: chatId,
           visibility: "visible"
-        }
-      })
+        },
+        order: [['createdAt', 'DESC']],
+        limit: 40,
+      });
 
       return res.json({ status: true, message: "messages list", data: messages });
     }

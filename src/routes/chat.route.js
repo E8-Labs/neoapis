@@ -7,7 +7,7 @@ const uploadFiles = multer().fields([
   ]);
 
 import {sendMessage, getMessages} from '../controllers/chat.controller.js'
-import {createProject, getUserProjects, UpdateProject} from '../controllers/projectController.js'
+import {createProject, getUserProjects, UpdateProject, assignProject} from '../controllers/projectController.js'
 let ChatRouter = express.Router()
 
 
@@ -16,6 +16,7 @@ ChatRouter.post("/update_project", verifyJwtToken, uploadFiles, UpdateProject);
 ChatRouter.get("/get_messages", verifyJwtToken, getMessages);
 ChatRouter.post("/create_project", verifyJwtToken, createProject);
 ChatRouter.get("/get_projects", verifyJwtToken, getUserProjects);
+ChatRouter.post("/assign_project", verifyJwtToken, assignProject);
 
 
 export default ChatRouter

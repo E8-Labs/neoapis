@@ -25,7 +25,14 @@ const Project = (sequelize, Sequelize) => {
       
     //   Project.belongsTo(User, { foreignKey: 'userId' });
     //   User.hasMany(Project, { foreignKey: 'userId' });
-      
+    Project.associate = (models) => {
+      // Associate Project with InvitedProject
+      Project.hasMany(models.InvitedProject, {
+        foreignKey: 'projectId',
+        as: 'InvitedProjects'
+      });
+    };
+  
       return Project
 }
 
