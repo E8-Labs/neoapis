@@ -10,7 +10,9 @@ import chalk from "chalk";
 import nodemailer from "nodemailer";
 import UserProfileFullResource from "../resources/userprofilefullresource.js";
 import TeamResource from "../resources/teamresource.js";
-import * as stripe from "../services/stripe.js ";
+// import * as stripe from "../services/stripe.js ";
+import {GetActiveSubscriptions, applyDiscountToNextCharge, createCustomer, } from "../services/stripe.js";
+// stripe.
 
 import {
   generateThumbnail,
@@ -91,15 +93,34 @@ export const LoginUser = async (req, res) => {
         );
       }
     }
+    if (usingShareCode !== "" && usingShareCode != null) {
+      //handle logic to give 20% off to the user
+      let otherUser = await db.User.findOne({
+        where: {
+          myShareCode: usingShareCode,
+        },
+      });
+    //   console.log("Finding subs for ", otherUser)
+      let subs = await GetActiveSubscriptions(otherUser);
+    //   console.log("Subs ", subs)
+      if (subs.length > 0) {
+        console.log("Sub is ", subs[0].subid)
+        let discounted = await applyDiscountToNextCharge(subs[0].subid);
+        console.log("Discount ", discounted);
+      }
+      else{
+        console.log("User don't have any subscriptions")
+      }
+    }
     const result = await SignUser(user);
-    let customer = await stripe.createCustomer(user, "loginuser");
+    let customer = await createCustomer(user, "loginuser");
     return res.send({ status: true, message: "User registered", data: result });
   } else {
     bcrypt.compare(password, user.password, async function (err, result) {
       // result == true
       if (result) {
         const result = await SignUser(user);
-        let customer = await stripe.createCustomer(user, "loginuser");
+        let customer = await createCustomer(user, "loginuser");
         return res.send({
           status: true,
           message: "User logged in",

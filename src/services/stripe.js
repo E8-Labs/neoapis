@@ -422,6 +422,7 @@ export const GetActiveSubscriptions = async (user) => {
                 ]
             }
         })
+        // console.log("Active Subs", active)
         if(active && active.length > 0){
             return active
         }
@@ -644,6 +645,38 @@ const handleSubscriptionPendingUpdateExpired = async (subscription) => {
 };
 
 
+
+export async function applyDiscountToNextCharge(subscriptionId) {
+    let key = process.env.Environment === "Sandbox" ? process.env.STRIPE_SK_TEST : process.env.STRIPE_SK_PRODUCTION;
+    console.log("Subscription in stripe.js ", subscriptionId)
+
+    try {
+        const stripe = StripeSdk(key);
+      // Step 1: Retrieve the upcoming invoice
+      const upcomingInvoice = await stripe.invoices.retrieveUpcoming({
+        subscription: subscriptionId,
+      });
+  
+      // Step 2: Calculate 20% discount
+      const discountAmount = Math.round(upcomingInvoice.total * 0.2); // 20% of the total amount
+        console.log(`Applying discount of ${discountAmount} for subscription ${subscriptionId}`)
+      // Step 3: Create a negative invoice item for the discount
+      await stripe.invoiceItems.create({
+        customer: upcomingInvoice.customer,
+        amount: -discountAmount, // Negative value to apply discount
+        currency: upcomingInvoice.currency,
+        description: '20% discount on next charge',
+        invoice: upcomingInvoice.id,
+      });
+  
+      console.log('Discount applied successfully to the next charge.');
+      return {status: true, message: 'Discount applied successfully to the next charge.'}
+    } catch (error) {
+      console.error('Error applying discount:', error);
+      return {status: false, message: error.message, error: error}
+    }
+  }
+  
 
 
 export const createInvoicePdf = async (invoiceId) => {
