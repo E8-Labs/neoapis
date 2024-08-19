@@ -101,7 +101,7 @@ const sendMessage = async (req, res) => {
             const docPath = path.join(docDir, mediaFilename);
             fs.writeFileSync(docPath, mediaBuffer);
             // doc = `/uploads/documents/${mediaFilename}`;
-            doc = `https://www.blindcircle.com:444/neo/uploads/documents/${mediaFilename}`;
+            image = `https://www.blindcircle.com:444/neo/uploads/documents/${mediaFilename}`;
           }
         }
 
