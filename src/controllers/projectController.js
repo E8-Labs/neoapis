@@ -57,7 +57,7 @@ const createProject = async (req, res) => {
                   - App.js
 
                   But make it generic. Depending on the requirements of the Project, generate required files. But keep them within respective folders
-                  we listed above. You can create folders within these or outside of these if required for that particular use case
+                  we listed above. You can create folders within these or outside of these if required for that particular use case.
                 
                 Use the above to complete the corresponding steps below with the founder.
                 Your name is Neo and technical cofounder and developer. 
