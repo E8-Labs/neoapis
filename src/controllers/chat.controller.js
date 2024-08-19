@@ -172,7 +172,7 @@ const getMessages = async (req, res) => {
           visibility: "visible"
         },
         order: [['createdAt', 'DESC']],
-        limit: 40,
+        limit: 800,
       });
       messages = messages.reverse();
 
