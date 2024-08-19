@@ -1,38 +1,63 @@
 // src/controllers/projectController.js
-import ProjectResource from '../resources/projectresource.js';
-import db from '../models/index.js';
+import ProjectResource from "../resources/projectresource.js";
+import db from "../models/index.js";
 import JWT from "jsonwebtoken";
-import { sendMessageToGPT } from '../services/gptService.js';
+import { sendMessageToGPT } from "../services/gptService.js";
 
-import fs from 'fs';
-import path from 'path';
-import { generateThumbnail, ensureDirExists } from '../utils/generateThumbnail.js';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import {
+  generateThumbnail,
+  ensureDirExists,
+} from "../utils/generateThumbnail.js";
+import { fileURLToPath } from "url";
 
-import { sendMessage } from './chat.controller.js';
-import TeamResource from '../resources/teamresource.js';
+import { sendMessage } from "./chat.controller.js";
+import TeamResource from "../resources/teamresource.js";
 // const Project = db.Project;
 // const Chat = db.Chat;
 
 const createProject = async (req, res) => {
-    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
-        if (authData) {
-            try {
-                const { appIdea, targettedAudience, projectName } = req.body;
-                console.log("Received data ", req.body)
-                const project = await db.Project.create({
-                    appIdea,
-                    targettedAudience,
-                    projectName,
-                    userId: authData.user.id
-                });
+  JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+    if (authData) {
+      try {
+        const { appIdea, targettedAudience, projectName } = req.body;
+        console.log("Received data ", req.body);
+        const project = await db.Project.create({
+          appIdea,
+          targettedAudience,
+          projectName,
+          userId: authData.user.id,
+        });
 
-                let prompt = `
+        let prompt = `
                 
                 Here are some of the details on the project
                 App Idea: ${appIdea}
                 Audience: ${targettedAudience}
                 App Name: ${projectName}
+
+                Use the following code structure
+                /AppTitle
+                  /src
+                    /components
+                      /Auth
+                        - Onboarding.js
+                        - SignIn.js
+                        - SignUp.js
+                        - ProfileSetup.js
+                      /Admin
+                        - Dashboard.js
+                      /User
+                        - UserHome.js
+                    /navigation
+                      - AppNavigator.js
+                    /assets
+                      - colors.js
+                  - App.js
+
+                  But make it generic. Depending on the requirements of the Project, generate required files. But keep them within respective folders
+                  we listed above. You can create folders within these or outside of these if required for that particular use case
                 
                 Use the above to complete the corresponding steps below with the founder.
                 Your name is Neo and technical cofounder and developer. 
@@ -178,127 +203,150 @@ You can access the example code structure in your knowledge base Step 10 Code St
 1. Your output should be one step at a time. Don't contiunue on to the next step until the user has confirmed or given feedback on each step. 
 2. While generating code put the file type in comments like //jsx, //js, //javascript or //tsx. Don't show them just as it is.               
 
-`
+`;
 
-                
-                // Create a chat for the project
-                const chat = await db.Chat.create({ projectId: project.id });
+        // Create a chat for the project
+        const chat = await db.Chat.create({ projectId: project.id });
 
+        //Send Message
+        const response = await sendMessageToGPT(prompt, [], null);
+        const gptResponse = response.choices[0];
+        let promptTokens = response.usage.prompt_tokens;
+        let completionTokens = response.usage.completion_tokens;
 
-                //Send Message
-                const response = await sendMessageToGPT(prompt, [], null);
-                const gptResponse = response.choices[0];
-                let promptTokens = response.usage.prompt_tokens;
-                let completionTokens = response.usage.completion_tokens;
+        const message = await db.Message.create({
+          content: prompt,
+          senderType: "user",
+          chatId: chat.id,
+          userId: authData.user.id,
+          image: null,
+          imageThumb: null,
+          docUrl: null,
+          tokens: promptTokens,
+          visibility: "hidden",
+        });
 
+        const gptMessage = await db.Message.create({
+          content: gptResponse.message.content,
+          senderType: "gpt",
+          chatId: chat.id,
+          image: null,
+          imageThumb: null,
+          docUrl: null,
+          tokens: completionTokens,
+          finishReason: gptResponse.finish_reason,
+        });
 
-                const message = await db.Message.create({
-                    content: prompt,
-                    senderType: 'user',
-                    chatId: chat.id,
-                    userId: authData.user.id,
-                    image: null,
-                    imageThumb: null,
-                    docUrl: null,
-                    tokens: promptTokens,
-                    visibility: "hidden"
-                });
-
-                const gptMessage = await db.Message.create({
-                    content: gptResponse.message.content,
-                    senderType: 'gpt',
-                    chatId: chat.id,
-                    image: null,
-                    imageThumb: null,
-                    docUrl: null,
-                    tokens: completionTokens,
-                    finishReason: gptResponse.finish_reason
-                });
-
-
-
-                res.status(200).json({ status: true, message: "Project created", data: await ProjectResource(project) });
-            } catch (error) {
-                res.status(500).json({ error: 'Server Error', status: false, message: error.message });
-            }
-        }
-        else {
-            res.status(500).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
-        }
-    })
-
+        res
+          .status(200)
+          .json({
+            status: true,
+            message: "Project created",
+            data: await ProjectResource(project),
+          });
+      } catch (error) {
+        res
+          .status(500)
+          .json({
+            error: "Server Error",
+            status: false,
+            message: error.message,
+          });
+      }
+    } else {
+      res
+        .status(500)
+        .json({
+          error: "Unauthenticated user",
+          status: false,
+          message: "Unauthenticated user",
+        });
+    }
+  });
 };
 
-
 export const UpdateProject = async (req, res) => {
-    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
-        if (authData) {
-            try {
-                let projectId = req.body.projectId;
-                let project = await db.Project.findByPk(projectId)
-                if (project) {
-                    if (req.body.projectName) {
-                        project.projectName = req.body.projectName;
-                    }
-                    let image = null, thumbnail = null, doc = null;
-                    if (req.files.media) {
-                        let file = req.files.media[0];
+  JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+    if (authData) {
+      try {
+        let projectId = req.body.projectId;
+        let project = await db.Project.findByPk(projectId);
+        if (project) {
+          if (req.body.projectName) {
+            project.projectName = req.body.projectName;
+          }
+          let image = null,
+            thumbnail = null,
+            doc = null;
+          if (req.files.media) {
+            let file = req.files.media[0];
 
-                        const mediaBuffer = file.buffer;
-                        const mediaType = file.mimetype;
-                        const mediaExt = path.extname(file.originalname);
-                        const mediaFilename = `${Date.now()}${mediaExt}`;
-                        console.log("There is a file uploaded")
-                        if (mediaType.includes('image')) {
+            const mediaBuffer = file.buffer;
+            const mediaType = file.mimetype;
+            const mediaExt = path.extname(file.originalname);
+            const mediaFilename = `${Date.now()}${mediaExt}`;
+            console.log("There is a file uploaded");
+            if (mediaType.includes("image")) {
+              // Ensure directories exist
+              let dir = process.env.DocsDir; //"/var/www/neo/neoapis/uploads"//"uploads"//
 
-                            // Ensure directories exist
-                            let dir = process.env.DocsDir//"/var/www/neo/neoapis/uploads"//"uploads"//
+              const imageDir = path.join(dir + "/images"); //path.join(__dirname, '../../uploads/images');
+              const thumbnailDir = path.join(dir + "/thumbnails"); //path.join(__dirname, '../../uploads/thumbnails');
+              ensureDirExists(imageDir);
+              ensureDirExists(thumbnailDir);
 
-                            const imageDir = path.join(dir + '/images');;//path.join(__dirname, '../../uploads/images');
-                            const thumbnailDir = path.join(dir + '/thumbnails');;//path.join(__dirname, '../../uploads/thumbnails');
-                            ensureDirExists(imageDir);
-                            ensureDirExists(thumbnailDir);
+              // Save image
+              const imagePath = path.join(imageDir, mediaFilename);
+              fs.writeFileSync(imagePath, mediaBuffer);
+              // image = `/uploads/images/${mediaFilename}`;
+              image = `https://www.blindcircle.com:444/neo/uploads/images/${mediaFilename}`;
+              // Generate and save thumbnail
+              const thumbnailBuffer = await generateThumbnail(mediaBuffer);
+              const thumbnailFilename = `${Date.now()}_thumb${mediaExt}`;
+              const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
+              fs.writeFileSync(thumbnailPath, thumbnailBuffer);
+              // thumbnail = `/uploads/thumbnails/${thumbnailFilename}`;
+              thumbnail = `https://www.blindcircle.com:444/neo/uploads/thumbnails/${thumbnailFilename}`;
 
-                            // Save image
-                            const imagePath = path.join(imageDir, mediaFilename);
-                            fs.writeFileSync(imagePath, mediaBuffer);
-                            // image = `/uploads/images/${mediaFilename}`;
-                            image = `https://www.blindcircle.com:444/neo/uploads/images/${mediaFilename}`;
-                            // Generate and save thumbnail
-                            const thumbnailBuffer = await generateThumbnail(mediaBuffer);
-                            const thumbnailFilename = `${Date.now()}_thumb${mediaExt}`;
-                            const thumbnailPath = path.join(thumbnailDir, thumbnailFilename);
-                            fs.writeFileSync(thumbnailPath, thumbnailBuffer);
-                            // thumbnail = `/uploads/thumbnails/${thumbnailFilename}`;
-                            thumbnail = `https://www.blindcircle.com:444/neo/uploads/thumbnails/${thumbnailFilename}`;
-
-                            project.projectImage = image;
-                            project.projectImageThumb = thumbnail;
-
-
-                        } else {
-
-                        }
-                    }
-                    let saved = project.save();
-
-                    res.status(200).json({ status: true, message: "Project updated", data: await ProjectResource(project) });
-                }
-                else {
-                    res.status(404).json({ status: true, message: "Project not found", data: null });
-                }
-
-
-            } catch (error) {
-                console.log("Error Create Project: ", error)
-                res.status(500).json({ error: 'Server Error', status: false, message: error.message });
+              project.projectImage = image;
+              project.projectImageThumb = thumbnail;
+            } else {
             }
-        }
-        else {
-            res.status(500).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
-        }
-    })
+          }
+          let saved = project.save();
 
+          res
+            .status(200)
+            .json({
+              status: true,
+              message: "Project updated",
+              data: await ProjectResource(project),
+            });
+        } else {
+          res
+            .status(404)
+            .json({ status: true, message: "Project not found", data: null });
+        }
+      } catch (error) {
+        console.log("Error Create Project: ", error);
+        res
+          .status(500)
+          .json({
+            error: "Server Error",
+            status: false,
+            message: error.message,
+          });
+      }
+    } else {
+      res
+        .status(500)
+        .json({
+          error: "Unauthenticated user",
+          status: false,
+          message: "Unauthenticated user",
+        });
+    }
+  });
 };
 // const getUserProjects = async (req, res) => {
 //     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
@@ -343,7 +391,6 @@ export const UpdateProject = async (req, res) => {
 //     });
 // };
 
-
 const getUserProjects = async (req, res) => {
   JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
     if (authData) {
@@ -351,119 +398,158 @@ const getUserProjects = async (req, res) => {
         // Fetch projects created by the authenticated user
         let userProjects = await db.Project.findAll({
           where: {
-            userId: authData.user.id
-          }
+            userId: authData.user.id,
+          },
         });
 
         // Fetch projects assigned to the authenticated user via the InvitedProject model
         let assignedProjects = await db.InvitedProject.findAll({
           where: {
-            InvitedUserId: authData.user.id
+            InvitedUserId: authData.user.id,
           },
           include: [
             {
               model: db.Project,
-              as: 'Project',
-            //   attributes: ['id', 'projectName', 'appIdea', 'targettedAudience', 'projectImage', 'projectImageThumb']
-            }
-          ]
+              as: "Project",
+              //   attributes: ['id', 'projectName', 'appIdea', 'targettedAudience', 'projectImage', 'projectImageThumb']
+            },
+          ],
         });
 
         // Extract the project details from the assigned projects
-        let invitedProjects = assignedProjects.map(assigned => assigned.Project);
+        let invitedProjects = assignedProjects.map(
+          (assigned) => assigned.Project
+        );
 
         // Combine both sets of projects
         let allProjects = [...userProjects, ...invitedProjects];
 
-        res.status(200).json({ status: true, message: "Projects retrieved successfully", data: await ProjectResource(allProjects) });
+        res
+          .status(200)
+          .json({
+            status: true,
+            message: "Projects retrieved successfully",
+            data: await ProjectResource(allProjects),
+          });
       } catch (error) {
         console.log("Error fetching projects: ", error);
-        res.status(500).json({ error: 'Server Error', status: false, message: error.message });
+        res
+          .status(500)
+          .json({
+            error: "Server Error",
+            status: false,
+            message: error.message,
+          });
       }
     } else {
-      res.status(401).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
+      res
+        .status(401)
+        .json({
+          error: "Unauthenticated user",
+          status: false,
+          message: "Unauthenticated user",
+        });
     }
   });
 };
 
-
-
 export const assignProject = async (req, res) => {
-    JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
-      if (authData) {
-        let projectId = req.body.projectId;
-        let userId = req.body.userId || 'none';
-        let userEmail = req.body.userEmail || 'none';
-        
-        console.log("User id ", authData.user.id)
-  
-        try {
-          // Check if the user is a team member
-          const teamMember = await db.Invitation.findOne({
-            where: {
-              [db.Sequelize.Op.or]: [
-                { toUser: userId },
-                { fromUser: userId },
-                {toUserEmail: userEmail}
-              ],
-              status: 'accepted',
-            },
+  JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+    if (authData) {
+      let projectId = req.body.projectId;
+      let userId = req.body.userId || "none";
+      let userEmail = req.body.userEmail || "none";
+
+      console.log("User id ", authData.user.id);
+
+      try {
+        // Check if the user is a team member
+        const teamMember = await db.Invitation.findOne({
+          where: {
+            [db.Sequelize.Op.or]: [
+              { toUser: userId },
+              { fromUser: userId },
+              { toUserEmail: userEmail },
+            ],
+            status: "accepted",
+          },
+        });
+
+        if (teamMember) {
+          // The user is a team member, proceed with project assignment
+          await db.InvitedProject.create({
+            projectId: projectId,
+            InvitedUserId: userId != "none" ? userId : null, // Assuming this is the correct foreign key name
+            InvitingUserId: authData.user.id,
+            InvitedUserEmail: userEmail != "none" ? userEmail : null,
           });
-  
-          if (teamMember) {
-            // The user is a team member, proceed with project assignment
-            await db.InvitedProject.create({
-              projectId: projectId,
-              InvitedUserId: userId != 'none' ? userId: null, // Assuming this is the correct foreign key name
-              InvitingUserId: authData.user.id,
-              InvitedUserEmail: userEmail != 'none' ? userEmail : null
-            });
-  
-            res.status(200).json({ status: true, message: "Project assigned successfully" });
-          } else {
-            // The user is not a team member
-            res.status(403).json({ status: false, message: "User is not a team member" });
-          }
-        } catch (err) {
-            console.log(err)
-          res.status(500).json({ status: false, message: "An error occurred", error: err.message });
+
+          res
+            .status(200)
+            .json({ status: true, message: "Project assigned successfully" });
+        } else {
+          // The user is not a team member
+          res
+            .status(403)
+            .json({ status: false, message: "User is not a team member" });
         }
-      } else {
-        res.status(500).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
+      } catch (err) {
+        console.log(err);
+        res
+          .status(500)
+          .json({
+            status: false,
+            message: "An error occurred",
+            error: err.message,
+          });
       }
-    });
-  };
-  
-  
-  
-export const GetInvitation = async(req, res)=> {
+    } else {
+      res
+        .status(500)
+        .json({
+          error: "Unauthenticated user",
+          status: false,
+          message: "Unauthenticated user",
+        });
+    }
+  });
+};
+
+export const GetInvitation = async (req, res) => {
   // JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
   //   if (authData) {
-      let inviteId = req.body.inviteId;
-      let invite = await db.Invitation.findByPk(inviteId)
-      if(invite){
-        let teamRes = await TeamResource(invite)
-        let projectInvited = await db.InvitedProject.findOne({
-          where: {
-            InvitedUserEmail: invite.toUserEmail
-          }
-        })
-        let project = await db.Project.findOne({
-          where: {
-            id: projectInvited.projectId
-          }
-        })
-        let projectRes = await ProjectResource(project)
-        res.send({ status: true, message: "Invite data", data: {invite: teamRes, project: projectRes} });
-      }
-      else{
-        res.send({ status: false, message: "No such invitation", reason: "no_such_invitation" });
-      }
-    }
-    // else{
-    //   res.status(401).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
-    // }
-  // })
+  let inviteId = req.body.inviteId;
+  let invite = await db.Invitation.findByPk(inviteId);
+  if (invite) {
+    let teamRes = await TeamResource(invite);
+    let projectInvited = await db.InvitedProject.findOne({
+      where: {
+        InvitedUserEmail: invite.toUserEmail,
+      },
+    });
+    let project = await db.Project.findOne({
+      where: {
+        id: projectInvited.projectId,
+      },
+    });
+    let projectRes = await ProjectResource(project);
+    res.send({
+      status: true,
+      message: "Invite data",
+      data: { invite: teamRes, project: projectRes },
+    });
+  } else {
+    res.send({
+      status: false,
+      message: "No such invitation",
+      reason: "no_such_invitation",
+    });
+  }
+};
+// else{
+//   res.status(401).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
+// }
+// })
 // }
 
-export { createProject, getUserProjects }
+export { createProject, getUserProjects };
