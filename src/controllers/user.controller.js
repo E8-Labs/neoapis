@@ -19,6 +19,7 @@ import {
   ensureDirExists,
 } from "../utils/generateThumbnail.js";
 import fs from "fs";
+import NotificationResource from "../resources/notificationresource.js";
 
 const User = db.User;
 const Op = db.Sequelize.Op;
@@ -227,6 +228,45 @@ export const UpdateProfile = async (req, res) => {
   });
 };
 
+
+export const GetNotifications = async(req, res)=> {
+  JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+    if (authData) {
+      console.log("Getting nots for ", authData.user.id)
+      let nots = await db.Notification.findAll({
+        where:{
+          toUser: authData.user.id
+        }
+      })
+
+      return res.send({status: true, message: "Notifications list", data: await NotificationResource(nots)})
+    }
+    else{
+      res.send({ status: false, message: "Unauthenticated user", data: null });
+    }
+
+  })
+}
+export const ReadNotifications = async(req, res)=> {
+  JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
+    if (authData) {
+      // let notId = req.body.notificationId;
+      console.log("Getting nots for ", authData.user.id)
+      let nots = await db.Notification.update({isRead: true},{
+        where:{
+          toUser: authData.user.id
+        }
+      })
+
+      return res.send({status: true, message: "Notifications read", data: null})
+    }
+    else{
+      res.send({ status: false, message: "Unauthenticated user", data: null });
+    }
+
+  })
+}
+
 export const acceptRejectInvitation = async (req, res) => {
   JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
     if (authData) {
@@ -241,6 +281,34 @@ export const acceptRejectInvitation = async (req, res) => {
             invite.status = status;
           }
           await invite.save();
+
+          //Logic to handle invitation and notifications
+          let count = await db.InvitedProject.count({
+            where: {
+              InvitedUserId: userId,
+              InvitingUserId: invite.fromUser
+            },
+          })
+          
+          if(count > 0){
+            let project = await db.InvitedProject.findOne({
+              where: {
+                InvitedUserId: userId,
+                InvitingUserId: invite.fromUser
+              },
+            })
+  
+            let not = await db.Notification.create({
+              fromUser: userId,
+              toUser: invite.fromUser,
+              projectId: project.id,
+              notificationType: 'ProjectJoined',
+            })
+          }
+
+
+
+
           res.send({
             status: true,
             message: "Invitation accepted",
