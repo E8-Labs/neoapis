@@ -23,6 +23,22 @@ const getRandomMessage = async () => {
 };
 
 
+async function checkUserActivity(userId) {
+  const twentyFourHoursAgo = new Date(new Date() - 24 * 60 * 60 * 1000);
+
+  const messages = await db.Message.findOne({
+    where: {
+      userId: userId,
+      senderType: 'user', // Ensure we are only checking messages sent by users
+      [Op.or]: {
+        createdAt: { [Op.gt]: twentyFourHoursAgo },
+        updatedAt: { [Op.gt]: twentyFourHoursAgo }
+      }
+    }
+  });
+
+  return !!messages; // Return true if a message exists, false otherwise
+}
 const sendMessage = async (req, res) => {
   console.log("Send message API called");
   JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
@@ -30,6 +46,23 @@ const sendMessage = async (req, res) => {
 
 
       const { content, chatId } = req.body;
+
+      let chat = await db.Chat.findByPk(chatId)
+      let project = await db.Project.findByPk(chat.projectId)
+      let updatedWithin24Hours = await checkUserActivity(authData.user.id)
+      if(!updatedWithin24Hours){
+        //send a notification
+        let not = await db.Notification.create({
+          fromUser: user.id,
+          toUser: project.userId,
+          projectId: project.id,
+          notificationType: 'ProjectUpdated',
+        })
+      }
+      //check if this user has made updates within previous 24 hours
+
+
+      
       // let m1 = {
       //   content,
       //   senderType: 'user',

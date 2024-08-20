@@ -9,6 +9,7 @@ import Invitation from './invitation.model.js'
 import SubscriptionModel from "./subscription.model.js";
 import TransactionModel from "./transaction.model.js";
 import InvitedProject from "./InvitedProject.model.js";
+import Notification from "./Notification.model.js";
 
 
 import Sequelize from 'sequelize'
@@ -76,6 +77,9 @@ models["InvitedProject"] = db.InvitedProject
 // db.User.hasMany(db.Team, {foreignKey: "userId", as: "Teams"})
 // db.Team.belongsTo(db.User, {foreignKey: "userId", as: "User"})
 
+
+db.Notification = Notification(sequelize, Sequelize);
+models["Notification"] = db.Notification
 
 Object.keys(models).forEach(modelName => {
   if (models[modelName].associate) {

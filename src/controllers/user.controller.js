@@ -80,7 +80,11 @@ export const LoginUser = async (req, res) => {
         invite.toUser = user.id;
         invite.status = "accepted";
         let saved = invite.save();
-
+        let count = await db.InvitedProject.count({
+          where: {
+            InvitedUserEmail: email,
+          },
+        })
         let projectInvitesUpdated = await db.InvitedProject.update(
           {
             InvitedUserId: user.id,
@@ -91,6 +95,20 @@ export const LoginUser = async (req, res) => {
             },
           }
         );
+        if(count > 0){
+          let project = await db.InvitedProject.findOne({
+            where: {
+              InvitedUserEmail: email,
+            },
+          })
+
+          let not = await db.Notification.create({
+            fromUser: user.id,
+            toUser: invite.fromUser,
+            projectId: project.id,
+            notificationType: 'ProjectJoined',
+          })
+        }
       }
     }
     if (usingShareCode !== "" && usingShareCode != null) {
