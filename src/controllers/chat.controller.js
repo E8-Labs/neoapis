@@ -31,8 +31,8 @@ async function checkUserActivity(userId) {
       userId: userId,
       senderType: 'user', // Ensure we are only checking messages sent by users
       [db.Sequelize.Op.or]: {
-        createdAt: { [Op.gt]: twentyFourHoursAgo },
-        updatedAt: { [Op.gt]: twentyFourHoursAgo }
+        createdAt: { [db.Sequelize.Op.gt]: twentyFourHoursAgo },
+        updatedAt: { [db.Sequelize.Op.gt]: twentyFourHoursAgo }
       }
     }
   });
