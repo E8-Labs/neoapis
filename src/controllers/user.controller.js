@@ -248,6 +248,7 @@ export const GetNotifications = async(req, res)=> {
   })
 }
 export const ReadNotifications = async(req, res)=> {
+  console.log("Token is ", req.token)
   JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
     if (authData) {
       // let notId = req.body.notificationId;
