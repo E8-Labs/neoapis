@@ -313,7 +313,7 @@ export const UpdateProject = async (req, res) => {
             } else {
             }
           }
-          let saved = project.save();
+          let saved = await project.save();
 
           res
             .status(200)

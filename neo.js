@@ -34,7 +34,7 @@ app.use((req, res, next) => {
     next();
   });
 
-  //This works now.
+ 
   // 'https://neo-ai-nu.vercel.app',// my project
   app.use(cors({
     origin: 'https://neoai-ebon.vercel.app',//https://neoai-ebon.vercel.app
