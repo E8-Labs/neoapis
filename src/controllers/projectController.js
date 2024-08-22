@@ -271,7 +271,9 @@ export const UpdateProject = async (req, res) => {
       try {
         let projectId = req.body.projectId;
         let project = await db.Project.findByPk(projectId);
+        console.log("Updating project ", projectId)
         if (project) {
+          console.log("Project found")
           if (req.body.projectName) {
             project.projectName = req.body.projectName;
           }
@@ -279,6 +281,7 @@ export const UpdateProject = async (req, res) => {
             thumbnail = null,
             doc = null;
           if (req.files.media) {
+            console.log("Project has image")
             let file = req.files.media[0];
 
             const mediaBuffer = file.buffer;
@@ -314,7 +317,12 @@ export const UpdateProject = async (req, res) => {
             }
           }
           let saved = await project.save();
-
+          if(saved ){
+            console.log("Project saved")
+          }
+          else{
+            console.log("Project not saved", saved)
+          }
           res
             .status(200)
             .json({
