@@ -356,48 +356,9 @@ export const UpdateProject = async (req, res) => {
     }
   });
 };
-// const getUserProjects = async (req, res) => {
-//     JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
-//         if (authData) {
-//             try {
-//                 // Fetch projects created by the authenticated user
-//                 let userProjects = await db.Project.findAll({
-//                     where: {
-//                         userId: authData.user.id
-//                     }
-//                 });
 
-//                 // Fetch accepted invitations where the authenticated user is the invitee
-//                 let acceptedInvitations = await db.Invitation.findAll({
-//                     where: {
-//                         toUser: authData.user.id,
-//                         status: 'accepted'
-//                     }
-//                 });
 
-//                 // Extract the IDs of the users who invited the authenticated user
-//                 let invitingUserIds = acceptedInvitations.map(invite => invite.fromUser);
 
-//                 // Fetch projects of the users who invited the authenticated user
-//                 let invitedProjects = await db.Project.findAll({
-//                     where: {
-//                         userId: invitingUserIds
-//                     }
-//                 });
-
-//                 // Combine both sets of projects
-//                 let allProjects = [...userProjects, ...invitedProjects];
-
-//                 res.status(200).json({ status: true, message: "Projects retrieved successfully", data: await ProjectResource(allProjects) });
-//             } catch (error) {
-//                 console.log("Error fetching projects: ", error);
-//                 res.status(500).json({ error: 'Server Error', status: false, message: error.message });
-//             }
-//         } else {
-//             res.status(401).json({ error: 'Unauthenticated user', status: false, message: "Unauthenticated user" });
-//         }
-//     });
-// };
 
 const getUserProjects = async (req, res) => {
   JWT.verify(req.token, process.env.SecretJwtKey, async (error, authData) => {
@@ -408,6 +369,9 @@ const getUserProjects = async (req, res) => {
           where: {
             userId: authData.user.id,
           },
+          order: [
+            ["updatedAt", "DESC"]
+          ]
         });
 
         // Fetch projects assigned to the authenticated user via the InvitedProject model
