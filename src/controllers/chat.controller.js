@@ -208,7 +208,17 @@ const getMessages = async (req, res) => {
         limit: 800,
       });
       // messages = messages.reverse();
+      const textsToRemove = ["(STOP, WAIT FOR RESPONSE)"];
 
+      // Iterate through each message and remove specified texts
+      messages = messages.map(message => {
+        if (message.content) {
+          textsToRemove.forEach(text => {
+            message.content = message.content.replace(new RegExp(text, 'g'), '');
+          });
+        }
+        return message;
+      });
       return res.json({ status: true, message: "messages list", data: messages });
     }
     else {
